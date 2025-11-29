@@ -81,7 +81,7 @@ Once a change passes validation, the Kubernetes cluster picks it up via the in-c
 
 ## In-Cluster Sync (Phase 4)
 
-`manifests/n8n-sync-cronjob.yaml` deploys a CronJob that runs *inside* the cluster every 10 minutes:
+The Helm chart at `ol-kubernetes-cluster/apps/workloads/n8n/chart` now exposes `gitSync.*` values. When `gitSync.enabled=true`, it deploys a CronJob inside the cluster every 10 minutes:
 
 1. Clones this repo over SSH using a read-only deploy key.
 2. Runs `ci/import_all.sh workflows`, pointing at the internal n8n service (`N8N_API_URL`).
@@ -89,7 +89,7 @@ Once a change passes validation, the Kubernetes cluster picks it up via the in-c
 
 ### Required Kubernetes Secrets
 
-Create two secrets before applying the CronJob manifest:
+Create two secrets in the `n8n` namespace before enabling the Helm values:
 
 1. **`n8n-sync-git`** – SSH material for cloning the repo.
 
@@ -106,10 +106,4 @@ kubectl -n n8n create secret generic n8n-sync-secrets \
   --from-literal=n8n-api-key=<personal-api-key>
 ```
 
-Then tune the manifest (repository URL, branch, internal service URL) and apply:
-
-```
-kubectl apply -f manifests/n8n-sync-cronjob.yaml
-```
-
-Monitor the CronJob (`kubectl get cronjob n8n-workflow-sync`) or add alerts so failures are surfaced quickly.
+Then set the appropriate `gitSync.*` values (repo, branch, apiUrl, secret names) in the Helm release (ApplicationSet). Once Argo CD syncs, the CronJob named `<release>-sync` will appear. Monitor with `kubectl get cronjob -n n8n` or hook it into your alerting pipeline.
