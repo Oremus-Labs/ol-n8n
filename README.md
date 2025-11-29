@@ -20,7 +20,7 @@ Each workflow lives in `workflows/<workflow-name>/workflow.json`. Optional subfo
 | Phase | Scope | Status |
 | --- | --- | --- |
 | **1. Repository scaffolding & conventions** | Create base tree, README, placeholder dirs, coding conventions. | ✅ Complete |
-| **2. Developer tooling** | Add export/import helpers, schema validation boilerplate, README for contributors. | ⏳ Planned |
+| **2. Developer tooling** | Add export/import helpers, schema validation boilerplate, README for contributors. | ✅ Complete |
 | **3. CI-driven workflow sync** | GitHub Actions pipeline to deploy to staging & prod via n8n API, with approvals. | ⏳ Planned |
 | **4. In-cluster reconciler & drift alerts** | Kubernetes CronJob/sidecar that periodically re-syncs from Git and flags drift. | ⏳ Planned |
 | **5. Observability & policy** | Dashboards/alerts for sync jobs, documentation on access control & runbooks. | ⏳ Planned |
@@ -42,4 +42,29 @@ Each phase builds on the previous one. We will update the status column (✅/�
 
 ## Next Steps
 
-Phase 2 will introduce developer tooling (export helpers + JSON schema validation). Track progress in this README.
+## Developer Tooling
+
+Phase 2 shipped the first set of contributor utilities:
+
+- `ci/export_all.sh` – pull every workflow from any n8n instance via REST and mirror it into `workflows/`.
+- `ci/import_all.sh` – push all tracked workflows into a target instance (idempotent create/update).
+- `npm run validate` – schema/policy checks for every `workflow.json` (ensures valid structure and prevents committing `active: true`).
+
+### Requirements
+
+- `jq` 1.6+
+- `curl`
+- Node.js 18+ (run `npm install` once to install the dev dependency `ajv`).
+
+### Typical Flow
+
+1. Export from dev: `N8N_API_URL=... N8N_API_KEY=... ci/export_all.sh`.
+2. Edit/review JSON + supporting assets.
+3. Run `npm run validate` before opening a PR.
+4. Import into a test instance (optional): `N8N_API_URL=... ci/import_all.sh`.
+
+These scripts will be invoked by CI/CD in Phase 3, so keep them deterministic and ensure they work locally.
+
+## Next Steps
+
+Phase 3 integrates the tooling into GitHub Actions so merges automatically deploy to staging/prod.
