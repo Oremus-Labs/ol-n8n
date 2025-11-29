@@ -1,13 +1,9 @@
-name: Deploy n8n workflows
+name: Validate n8n workflows
 
 on:
   push:
     branches: ["main"]
   workflow_dispatch:
-
-concurrency:
-  group: n8n-deploy-${{ github.ref }}
-  cancel-in-progress: false
 
 jobs:
   validate:
@@ -21,51 +17,3 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run validate
-
-  deploy-staging:
-    name: Deploy to staging
-    needs: validate
-    runs-on: [self-hosted, n8n]
-    environment: staging
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - name: Import workflows into staging
-        env:
-          N8N_API_URL: ${{ secrets.STAGING_N8N_URL }}
-          N8N_API_KEY: ${{ secrets.STAGING_N8N_API_KEY }}
-        run: |
-          if [[ -z "$N8N_API_URL" || -z "$N8N_API_KEY" ]]; then
-            echo "Missing staging secrets" >&2
-            exit 1
-          fi
-          ci/import_all.sh workflows
-
-  deploy-production:
-    name: Deploy to production
-    needs: deploy-staging
-    runs-on: [self-hosted, n8n]
-    environment:
-      name: production
-      url: ${{ secrets.PROD_N8N_URL }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - name: Import workflows into production
-        env:
-          N8N_API_URL: ${{ secrets.PROD_N8N_URL }}
-          N8N_API_KEY: ${{ secrets.PROD_N8N_API_KEY }}
-        run: |
-          if [[ -z "$N8N_API_URL" || -z "$N8N_API_KEY" ]]; then
-            echo "Missing production secrets" >&2
-            exit 1
-          fi
-          ci/import_all.sh workflows

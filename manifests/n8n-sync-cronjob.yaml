@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: n8n-workflow-sync
+  namespace: n8n
+  annotations:
+    description: Periodically sync n8n workflows from Git into the cluster
+spec:
+  schedule: "*/10 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: sync
+              image: alpine/git:2.45.2
+              env:
+                - name: GIT_REPO
+                  value: git@github.com:Oremus-Labs/ol-n8n.git
+                - name: GIT_BRANCH
+                  value: main
+                - name: N8N_API_URL
+                  value: http://n8n.n8n.svc.cluster.local:5678
+                - name: N8N_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: n8n-sync-secrets
+                      key: n8n-api-key
+              volumeMounts:
+                - name: git-ssh
+                  mountPath: /ssh
+                  readOnly: true
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -euo pipefail
+                  apk add --no-cache bash curl jq openssh
+                  mkdir -p /workspace
+                  cd /workspace
+                  export GIT_SSH_COMMAND="ssh -i /ssh/id_ed25519 -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/ssh/known_hosts"
+                  git clone --depth 1 -b "${GIT_BRANCH}" "${GIT_REPO}" repo
+                  cd repo
+                  chmod +x ci/import_all.sh
+                  N8N_API_URL="${N8N_API_URL}" N8N_API_KEY="${N8N_API_KEY}" ci/import_all.sh workflows
+          volumes:
+            - name: git-ssh
+              secret:
+                secretName: n8n-sync-git
+                defaultMode: 0400

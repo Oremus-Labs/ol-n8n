@@ -21,8 +21,8 @@ Each workflow lives in `workflows/<workflow-name>/workflow.json`. Optional subfo
 | --- | --- | --- |
 | **1. Repository scaffolding & conventions** | Create base tree, README, placeholder dirs, coding conventions. | ✅ Complete |
 | **2. Developer tooling** | Add export/import helpers, schema validation boilerplate, README for contributors. | ✅ Complete |
-| **3. CI-driven workflow sync** | GitHub Actions pipeline to deploy to staging & prod via n8n API, with approvals. | ✅ Complete (self-hosted runner) |
-| **4. In-cluster reconciler & drift alerts** | Kubernetes CronJob/sidecar that periodically re-syncs from Git and flags drift. | ⏳ Planned |
+| **3. CI-driven workflow sync** | GitHub Actions workflow validates every change (public runners only). | ✅ Complete |
+| **4. In-cluster reconciler & drift alerts** | Kubernetes CronJob/sidecar that periodically re-syncs from Git and flags drift. | ✅ Complete |
 | **5. Observability & policy** | Dashboards/alerts for sync jobs, documentation on access control & runbooks. | ⏳ Planned |
 
 Each phase builds on the previous one. We will update the status column (✅/🚧/⏳) as work progresses.
@@ -67,40 +67,49 @@ These scripts will be invoked by CI/CD in Phase 3, so keep them deterministic an
 
 ## Next Steps
 
-Phase 3 wired the repo into GitHub Actions so merges automatically deploy to staging/prod.
+Phase 3 wired the repo into GitHub Actions so every merge runs validation on a public runner—no network connectivity to n8n required.
 
 ## Continuous Deployment (Phase 3)
 
-`.github/workflows/deploy.yml` now automates the promotion pipeline:
+`.github/workflows/deploy.yml` now runs a single job on `ubuntu-latest`:
 
-1. **validate** – runs on `ubuntu-latest`, executes `npm ci && npm run validate`.
-2. **deploy-staging** – runs on a self-hosted runner (label `n8n`) that can reach the private n8n service. Imports all workflows via `ci/import_all.sh` using `STAGING_N8N_URL` + `STAGING_N8N_API_KEY` secrets. Targets the `staging` GitHub environment.
-3. **deploy-production** – same as staging, but gated by the `production` environment for manual approval. Uses `PROD_N8N_URL` + `PROD_N8N_API_KEY` secrets.
+1. Checks out the repository.
+2. Installs Node.js 20 + dependencies (`npm ci`).
+3. Executes `npm run validate` to lint every committed workflow.
 
-### Required Secrets / Environments
+Once a change passes validation, the Kubernetes cluster picks it up via the in-cluster CronJob (Phase 4). There are no GitHub secrets beyond the defaults.
 
-Create these secrets in GitHub (scoped to the repository environments):
+## In-Cluster Sync (Phase 4)
 
-| Secret | Description |
-| --- | --- |
-| `STAGING_N8N_URL` | Base URL reachable from the self-hosted runner (e.g. `http://n8n.n8n.svc.cluster.local:5678`). |
-| `STAGING_N8N_API_KEY` | Personal API token for the staging n8n instance. |
-| `PROD_N8N_URL` | Production base URL. |
-| `PROD_N8N_API_KEY` | Production personal API token. |
+`manifests/n8n-sync-cronjob.yaml` deploys a CronJob that runs *inside* the cluster every 10 minutes:
 
-The production environment should require manual approval in GitHub so deployments halt until an operator reviews staging.
+1. Clones this repo over SSH using a read-only deploy key.
+2. Runs `ci/import_all.sh workflows`, pointing at the internal n8n service (`N8N_API_URL`).
+3. Because everything runs inside the VPC/cluster network, n8n never needs to be exposed externally.
 
-### Self-Hosted Runner Requirement
+### Required Kubernetes Secrets
 
-Because the n8n instances live on a private network, public GitHub runners cannot reach them. Provision a self-hosted runner with the `n8n` label:
+Create two secrets before applying the CronJob manifest:
 
-1. Deploy a VM or Kubernetes pod inside the network (e.g. via [actions-runner-controller](https://github.com/actions/actions-runner-controller)).
-2. Register it against this repository with labels `self-hosted,n8n`.
-3. Ensure it has access to `git`, `bash`, `jq`, `curl`, and Node.js 20+.
-4. Expose DNS (or host entries) so it can reach the staging/prod n8n base URLs defined above.
+1. **`n8n-sync-git`** – SSH material for cloning the repo.
 
-The workflow’s `runs-on: [self-hosted, n8n]` constraint guarantees only that private runner handles deploy steps.
+```
+kubectl -n n8n create secret generic n8n-sync-git \
+  --from-file=id_ed25519=/path/to/deploy_key \
+  --from-file=known_hosts=/path/to/known_hosts
+```
 
-## Next Steps
+2. **`n8n-sync-secrets`** – API token for the in-cluster n8n instance.
 
-Phase 4 will add an in-cluster reconciler / drift detection job that periodically reapplies Git state and raises alerts if someone edits workflows directly in n8n.
+```
+kubectl -n n8n create secret generic n8n-sync-secrets \
+  --from-literal=n8n-api-key=<personal-api-key>
+```
+
+Then tune the manifest (repository URL, branch, internal service URL) and apply:
+
+```
+kubectl apply -f manifests/n8n-sync-cronjob.yaml
+```
+
+Monitor the CronJob (`kubectl get cronjob n8n-workflow-sync`) or add alerts so failures are surfaced quickly.
