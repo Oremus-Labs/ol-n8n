@@ -83,27 +83,21 @@ Once a change passes validation, the Kubernetes cluster picks it up via the in-c
 
 The Helm chart at `ol-kubernetes-cluster/apps/workloads/n8n/chart` now exposes `gitSync.*` values. When `gitSync.enabled=true`, it deploys a CronJob inside the cluster every 10 minutes:
 
-1. Clones this repo over SSH using a read-only deploy key.
+1. Clones this repo (public) via HTTPS by default (no credentials required). Set `gitSync.gitSecret.name` only if you want to use an SSH deploy key.
 2. Runs `ci/import_all.sh workflows`, pointing at the internal n8n service (`N8N_API_URL`).
 3. Because everything runs inside the VPC/cluster network, n8n never needs to be exposed externally.
 
 ### Required Kubernetes Secrets
 
-Create two secrets in the `n8n` namespace before enabling the Helm values:
+Create the following secret in the `n8n` namespace before enabling the values:
 
-1. **`n8n-sync-git`** – SSH material for cloning the repo.
-
-```
-kubectl -n n8n create secret generic n8n-sync-git \
-  --from-file=id_ed25519=/path/to/deploy_key \
-  --from-file=known_hosts=/path/to/known_hosts
-```
-
-2. **`n8n-sync-secrets`** – API token for the in-cluster n8n instance.
+1. **`n8n-sync-secrets`** – API token for the in-cluster n8n instance.
 
 ```
 kubectl -n n8n create secret generic n8n-sync-secrets \
   --from-literal=n8n-api-key=<personal-api-key>
 ```
 
-Then set the appropriate `gitSync.*` values (repo, branch, apiUrl, secret names) in the Helm release (ApplicationSet). Once Argo CD syncs, the CronJob named `<release>-sync` will appear. Monitor with `kubectl get cronjob -n n8n` or hook it into your alerting pipeline.
+If you prefer SSH cloning, create the optional `n8n-sync-git` secret (deploy key + known_hosts) and set `gitSync.gitSecret.name` accordingly. Otherwise leave it empty and the CronJob will clone via HTTPS anonymously.
+
+Set the appropriate `gitSync.*` values (repo, branch, apiUrl) in the Helm release (ApplicationSet). Once Argo CD syncs, the CronJob named `<release>-sync` will appear. Monitor with `kubectl get cronjob -n n8n` or hook it into your alerting pipeline.
