@@ -47,21 +47,27 @@ Each phase builds on the previous one. We will update the status column (✅/�
 Phase 2 shipped the first set of contributor utilities:
 
 - `ci/export_all.sh` – pull every workflow from any n8n instance via REST and mirror it into `workflows/`.
-- `ci/import_all.sh` – push all tracked workflows into a target instance (idempotent create/update).
+- `ci/import_all.mjs` (invoked via `npm run import`) – push all tracked workflows into a target instance (idempotent create/update) after validating the payloads against the official SDK schema.
 - `npm run validate` – schema/policy checks for every `workflow.json` (ensures valid structure and prevents committing `active: true`).
 
 ### Requirements
 
 - `jq` 1.6+
 - `curl`
-- Node.js 18+ (run `npm install` once to install the dev dependency `ajv`).
+- Node.js 18+ (run `npm install` once to install repo dependencies used by the importer + validation tooling).
 
 ### Typical Flow
 
 1. Export from dev: `N8N_API_URL=... N8N_API_KEY=... ci/export_all.sh`.
 2. Edit/review JSON + supporting assets.
 3. Run `npm run validate` before opening a PR.
-4. Import into a test instance (optional): `N8N_API_URL=... ci/import_all.sh`.
+4. Import into a test instance (optional):
+
+```
+N8N_API_URL=... \
+N8N_API_KEY=... \
+npm run import
+```
 
 These scripts will be invoked by CI/CD in Phase 3, so keep them deterministic and ensure they work locally.
 
@@ -84,7 +90,7 @@ Once a change passes validation, the Kubernetes cluster picks it up via the in-c
 The Helm chart at `ol-kubernetes-cluster/apps/workloads/n8n/chart` now exposes `gitSync.*` values. When `gitSync.enabled=true`, it deploys a CronJob inside the cluster every 10 minutes:
 
 1. Clones this repo (public) via HTTPS by default (no credentials required). Set `gitSync.gitSecret.name` only if you want to use an SSH deploy key.
-2. Runs `ci/import_all.sh workflows`, pointing at the internal n8n service (`N8N_API_URL`).
+2. Runs `npm ci --omit=dev` followed by `npm run import`, pointing at the internal n8n service (`N8N_API_URL`).
 3. Because everything runs inside the VPC/cluster network, n8n never needs to be exposed externally.
 
 ### Required Kubernetes Secrets

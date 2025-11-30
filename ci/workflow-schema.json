@@ -1,46 +1,2612 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "n8n Workflow",
-  "type": "object",
-  "required": ["name", "nodes", "connections"],
-  "properties": {
-    "id": {
-      "oneOf": [
-        { "type": "integer", "minimum": 1 },
-        { "type": "string", "minLength": 1 }
+  "allOf": [
+    {
+      "$ref": "#/definitions/WorkflowImportShape"
+    },
+    {
+      "properties": {
+        "connections": {
+          "$ref": "#/definitions/IConnections"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/definitions/INode"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    }
+  ],
+  "definitions": {
+    "ArrayBuffer": {
+      "properties": {
+        "__@toStringTag@3223": {
+          "type": "string"
+        },
+        "byteLength": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "ArrayBufferLike": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ArrayBuffer"
+        },
+        {
+          "$ref": "#/definitions/SharedArrayBuffer"
+        }
       ]
     },
-    "name": {
-      "type": "string",
-      "minLength": 1
-    },
-    "active": {
-      "type": "boolean"
-    },
-    "nodes": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": "object",
-        "required": ["id", "name", "type"],
-        "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "name": { "type": "string", "minLength": 1 },
-          "type": { "type": "string", "minLength": 1 }
+    "DeclarativeRestApiSettings.HttpRequestOptions": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/Omit_IHttpRequestOptions__url___skipSslCertificateValidation__"
         },
-        "additionalProperties": true
-      }
+        {
+          "properties": {
+            "skipSslCertificateValidation": {
+              "type": [
+                "string",
+                "boolean"
+              ]
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      ]
     },
-    "connections": {
+    "Error": {
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "stack": {
+          "type": "string"
+        }
+      },
       "type": "object"
     },
-    "settings": {
+    "ErrorLevel": {
+      "enum": [
+        "error",
+        "fatal",
+        "info",
+        "warning"
+      ],
+      "type": "string"
+    },
+    "FilterOperatorType": {
+      "enum": [
+        "any",
+        "array",
+        "boolean",
+        "dateTime",
+        "number",
+        "object",
+        "string"
+      ],
+      "type": "string"
+    },
+    "FilterOperatorValue": {
+      "properties": {
+        "operation": {
+          "type": "string"
+        },
+        "rightType": {
+          "enum": [
+            "any",
+            "array",
+            "boolean",
+            "dateTime",
+            "number",
+            "object",
+            "string"
+          ],
+          "type": "string"
+        },
+        "singleValue": {
+          "type": "boolean"
+        },
+        "type": {
+          "$ref": "#/definitions/FilterOperatorType"
+        }
+      },
       "type": "object"
     },
-    "tags": {
-      "type": "array",
-      "items": { "type": "object" }
+    "FilterTypeCombinator": {
+      "enum": [
+        "and",
+        "or"
+      ],
+      "type": "string"
+    },
+    "Functionality": {
+      "enum": [
+        "configuration-node",
+        "pairedItem",
+        "regular"
+      ],
+      "type": "string"
+    },
+    "GenericAbortSignal": {
+      "properties": {
+        "aborted": {
+          "type": "boolean"
+        },
+        "addEventListener": {
+          "type": "object"
+        },
+        "onabort": {
+          "type": [
+            "null",
+            "object"
+          ]
+        },
+        "removeEventListener": {
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "GenericValue": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "type": [
+            "null",
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      ]
+    },
+    "IBinaryData": {
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "properties": {
+        "data": {
+          "type": "string"
+        },
+        "directory": {
+          "type": "string"
+        },
+        "fileExtension": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "fileSize": {
+          "type": "string"
+        },
+        "fileType": {
+          "enum": [
+            "audio",
+            "html",
+            "image",
+            "json",
+            "pdf",
+            "text",
+            "video"
+          ],
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IBinaryKeyData": {
+      "additionalProperties": {
+        "$ref": "#/definitions/IBinaryData"
+      },
+      "type": "object"
+    },
+    "IConnection": {
+      "properties": {
+        "index": {
+          "type": "number"
+        },
+        "node": {
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/NodeConnectionType"
+        }
+      },
+      "type": "object"
+    },
+    "IConnections": {
+      "additionalProperties": {
+        "$ref": "#/definitions/INodeConnections"
+      },
+      "type": "object"
+    },
+    "IDataObject": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "properties": {},
+            "type": "object"
+          },
+          {
+            "$ref": "#/definitions/IDataObject"
+          },
+          {
+            "items": {
+              "$ref": "#/definitions/IDataObject"
+            },
+            "type": "array"
+          },
+          {
+            "items": {
+              "$ref": "#/definitions/GenericValue"
+            },
+            "type": "array"
+          },
+          {
+            "type": [
+              "null",
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        ]
+      },
+      "type": "object"
+    },
+    "IDisplayOptions": {
+      "properties": {
+        "hide": {
+          "additionalProperties": {
+            "items": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "eq": {
+                          "$ref": "#/definitions/NodeParameterValue"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "not": {
+                          "$ref": "#/definitions/NodeParameterValue"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "gte": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "lte": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "gt": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "lt": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "between": {
+                          "properties": {
+                            "from": {
+                              "type": [
+                                "string",
+                                "number"
+                              ]
+                            },
+                            "to": {
+                              "type": [
+                                "string",
+                                "number"
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "startsWith": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "endsWith": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "includes": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "regex": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "exists": {
+                          "const": true,
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": [
+                    "null",
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "type": "object"
+        },
+        "hideOnCloud": {
+          "type": "boolean"
+        },
+        "show": {
+          "additionalProperties": {
+            "items": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "eq": {
+                          "$ref": "#/definitions/NodeParameterValue"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "not": {
+                          "$ref": "#/definitions/NodeParameterValue"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "gte": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "lte": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "gt": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "lt": {
+                          "type": [
+                            "string",
+                            "number"
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "between": {
+                          "properties": {
+                            "from": {
+                              "type": [
+                                "string",
+                                "number"
+                              ]
+                            },
+                            "to": {
+                              "type": [
+                                "string",
+                                "number"
+                              ]
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "startsWith": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "endsWith": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "includes": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "regex": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "_cnd": {
+                      "properties": {
+                        "exists": {
+                          "const": true,
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": [
+                    "null",
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "properties": {
+            "@tool": {
+              "items": {
+                "type": "boolean"
+              },
+              "type": "array"
+            },
+            "@version": {
+              "items": {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "eq": {
+                            "$ref": "#/definitions/NodeParameterValue"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "not": {
+                            "$ref": "#/definitions/NodeParameterValue"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "gte": {
+                            "type": [
+                              "string",
+                              "number"
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "lte": {
+                            "type": [
+                              "string",
+                              "number"
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "gt": {
+                            "type": [
+                              "string",
+                              "number"
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "lt": {
+                            "type": [
+                              "string",
+                              "number"
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "between": {
+                            "properties": {
+                              "from": {
+                                "type": [
+                                  "string",
+                                  "number"
+                                ]
+                              },
+                              "to": {
+                                "type": [
+                                  "string",
+                                  "number"
+                                ]
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "startsWith": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "endsWith": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "includes": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "regex": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "_cnd": {
+                        "properties": {
+                          "exists": {
+                            "const": true,
+                            "type": "boolean"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "IN8nRequestOperationPaginationGeneric": {
+      "properties": {
+        "properties": {
+          "properties": {
+            "continue": {
+              "type": [
+                "string",
+                "boolean"
+              ]
+            },
+            "request": {
+              "$ref": "#/definitions/IRequestOptionsSimplifiedAuth"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "generic",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IN8nRequestOperationPaginationOffset": {
+      "properties": {
+        "properties": {
+          "properties": {
+            "limitParameter": {
+              "type": "string"
+            },
+            "offsetParameter": {
+              "type": "string"
+            },
+            "pageSize": {
+              "type": "number"
+            },
+            "rootProperty": {
+              "type": "string"
+            },
+            "type": {
+              "enum": [
+                "body",
+                "query"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "offset",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IN8nRequestOperations": {
+      "properties": {
+        "pagination": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IN8nRequestOperationPaginationGeneric"
+            },
+            {
+              "$ref": "#/definitions/IN8nRequestOperationPaginationOffset"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "INode": {
+      "properties": {
+        "alwaysOutputData": {
+          "type": "boolean"
+        },
+        "continueOnFail": {
+          "type": "boolean"
+        },
+        "credentials": {
+          "$ref": "#/definitions/INodeCredentials"
+        },
+        "disabled": {
+          "type": "boolean"
+        },
+        "executeOnce": {
+          "type": "boolean"
+        },
+        "extendsCredential": {
+          "type": "string"
+        },
+        "forceCustomOperation": {
+          "properties": {
+            "operation": {
+              "type": "string"
+            },
+            "resource": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "id": {
+          "type": "string"
+        },
+        "maxTries": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "notesInFlow": {
+          "type": "boolean"
+        },
+        "onError": {
+          "enum": [
+            "continueErrorOutput",
+            "continueRegularOutput",
+            "stopWorkflow"
+          ],
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/definitions/INodeParameters"
+        },
+        "position": {
+          "items": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "retryOnFail": {
+          "type": "boolean"
+        },
+        "rewireOutputLogTo": {
+          "enum": [
+            "ai_agent",
+            "ai_chain",
+            "ai_document",
+            "ai_embedding",
+            "ai_languageModel",
+            "ai_memory",
+            "ai_outputParser",
+            "ai_reranker",
+            "ai_retriever",
+            "ai_textSplitter",
+            "ai_tool",
+            "ai_vectorStore",
+            "main"
+          ],
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "typeVersion": {
+          "type": "number"
+        },
+        "waitBetweenTries": {
+          "type": "number"
+        },
+        "webhookId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "INodeConnections": {
+      "additionalProperties": {
+        "items": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/definitions/IConnection"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "type": "object"
+    },
+    "INodeCredentials": {
+      "additionalProperties": {
+        "$ref": "#/definitions/INodeCredentialsDetails"
+      },
+      "type": "object"
+    },
+    "INodeCredentialsDetails": {
+      "properties": {
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "INodeExecutionData": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/NodeApiError"
+          },
+          {
+            "$ref": "#/definitions/NodeOperationError"
+          },
+          {
+            "$ref": "#/definitions/IDataObject"
+          },
+          {
+            "$ref": "#/definitions/IBinaryKeyData"
+          },
+          {
+            "$ref": "#/definitions/IPairedItemData"
+          },
+          {
+            "items": {
+              "$ref": "#/definitions/IPairedItemData"
+            },
+            "type": "array"
+          },
+          {
+            "type": [
+              "string",
+              "number"
+            ]
+          }
+        ]
+      },
+      "properties": {
+        "binary": {
+          "$ref": "#/definitions/IBinaryKeyData"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NodeApiError"
+            },
+            {
+              "$ref": "#/definitions/NodeOperationError"
+            }
+          ]
+        },
+        "evaluationData": {
+          "$ref": "#/definitions/Record_string_GenericValue_"
+        },
+        "index": {
+          "type": "number"
+        },
+        "json": {
+          "$ref": "#/definitions/IDataObject"
+        },
+        "metadata": {
+          "properties": {
+            "subExecution": {
+              "$ref": "#/definitions/RelatedExecution"
+            }
+          },
+          "type": "object"
+        },
+        "pairedItem": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/IPairedItemData"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/IPairedItemData"
+              },
+              "type": "array"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        },
+        "sendMessage": {
+          "description": "Use this key to send a message to the chat.\n\n- Workflow has to be started by a chat node.\n- Put execution to wait after sending.\n\nSee example in\npackages/@n8n/nodes-langchain/nodes/trigger/ChatTrigger/Chat.node.ts",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "INodeParameterResourceLocator": {
+      "properties": {
+        "__regex": {
+          "type": "string"
+        },
+        "__rl": {
+          "const": true,
+          "type": "boolean"
+        },
+        "cachedResultName": {
+          "type": "string"
+        },
+        "cachedResultUrl": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "null",
+            "string",
+            "number"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "INodeParameters": {
+      "additionalProperties": {
+        "$ref": "#/definitions/NodeParameterValueType"
+      },
+      "type": "object"
+    },
+    "INodePropertyOptions": {
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "displayOptions": {
+          "$ref": "#/definitions/IDisplayOptions"
+        },
+        "inputSchema": {},
+        "name": {
+          "type": "string"
+        },
+        "outputConnectionType": {
+          "enum": [
+            "ai_agent",
+            "ai_chain",
+            "ai_document",
+            "ai_embedding",
+            "ai_languageModel",
+            "ai_memory",
+            "ai_outputParser",
+            "ai_reranker",
+            "ai_retriever",
+            "ai_textSplitter",
+            "ai_tool",
+            "ai_vectorStore",
+            "main"
+          ],
+          "type": "string"
+        },
+        "routing": {
+          "$ref": "#/definitions/INodePropertyRouting"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "INodePropertyRouting": {
+      "properties": {
+        "operations": {
+          "$ref": "#/definitions/IN8nRequestOperations"
+        },
+        "output": {
+          "$ref": "#/definitions/INodeRequestOutput"
+        },
+        "request": {
+          "$ref": "#/definitions/DeclarativeRestApiSettings.HttpRequestOptions"
+        },
+        "send": {
+          "$ref": "#/definitions/INodeRequestSend"
+        }
+      },
+      "type": "object"
+    },
+    "INodeRequestOutput": {
+      "properties": {
+        "maxResults": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "postReceive": {
+          "items": {
+            "$ref": "#/definitions/PostReceiveAction"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "INodeRequestSend": {
+      "properties": {
+        "paginate": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "preSend": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "property": {
+          "type": "string"
+        },
+        "propertyInDotNotation": {
+          "type": "boolean"
+        },
+        "type": {
+          "enum": [
+            "body",
+            "query"
+          ],
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IPairedItemData": {
+      "properties": {
+        "input": {
+          "type": "number"
+        },
+        "item": {
+          "type": "number"
+        },
+        "sourceOverwrite": {
+          "$ref": "#/definitions/ISourceData"
+        }
+      },
+      "type": "object"
+    },
+    "IPinData": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/definitions/INodeExecutionData"
+        },
+        "type": "array"
+      },
+      "type": "object"
+    },
+    "IPostReceiveBinaryData": {
+      "properties": {
+        "enabled": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "properties": {
+          "properties": {
+            "destinationProperty": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "binaryData",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IPostReceiveFilter": {
+      "properties": {
+        "enabled": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "properties": {
+          "properties": {
+            "pass": {
+              "type": [
+                "string",
+                "boolean"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "filter",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IPostReceiveLimit": {
+      "properties": {
+        "enabled": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "properties": {
+          "properties": {
+            "maxResults": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "limit",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IPostReceiveRootProperty": {
+      "properties": {
+        "enabled": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "properties": {
+          "properties": {
+            "property": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "rootProperty",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IPostReceiveSet": {
+      "properties": {
+        "enabled": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "properties": {
+          "properties": {
+            "value": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "set",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IPostReceiveSetKeyValue": {
+      "properties": {
+        "enabled": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "properties": {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "setKeyValue",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IPostReceiveSort": {
+      "properties": {
+        "enabled": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "errorMessage": {
+          "type": "string"
+        },
+        "properties": {
+          "properties": {
+            "key": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "type": {
+          "const": "sort",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "IRequestOptionsSimplifiedAuth": {
+      "properties": {
+        "auth": {
+          "properties": {
+            "password": {
+              "type": "string"
+            },
+            "sendImmediately": {
+              "type": "boolean"
+            },
+            "username": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "body": {
+          "$ref": "#/definitions/IDataObject"
+        },
+        "headers": {
+          "$ref": "#/definitions/IDataObject"
+        },
+        "qs": {
+          "$ref": "#/definitions/IDataObject"
+        },
+        "skipSslCertificateValidation": {
+          "type": [
+            "string",
+            "boolean"
+          ]
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ISourceData": {
+      "properties": {
+        "previousNode": {
+          "type": "string"
+        },
+        "previousNodeOutput": {
+          "type": "number"
+        },
+        "previousNodeRun": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "IWorkflowSettings": {
+      "properties": {
+        "availableInMCP": {
+          "type": "boolean"
+        },
+        "callerIds": {
+          "type": "string"
+        },
+        "callerPolicy": {
+          "enum": [
+            "any",
+            "none",
+            "workflowsFromAList",
+            "workflowsFromSameOwner"
+          ],
+          "type": "string"
+        },
+        "errorWorkflow": {
+          "type": "string"
+        },
+        "executionOrder": {
+          "enum": [
+            "v0",
+            "v1"
+          ],
+          "type": "string"
+        },
+        "executionTimeout": {
+          "type": "number"
+        },
+        "saveDataErrorExecution": {
+          "enum": [
+            "DEFAULT",
+            "all",
+            "none"
+          ],
+          "type": "string"
+        },
+        "saveDataSuccessExecution": {
+          "enum": [
+            "DEFAULT",
+            "all",
+            "none"
+          ],
+          "type": "string"
+        },
+        "saveExecutionProgress": {
+          "enum": [
+            "DEFAULT",
+            false,
+            true
+          ]
+        },
+        "saveManualExecutions": {
+          "enum": [
+            "DEFAULT",
+            false,
+            true
+          ]
+        },
+        "timeSavedPerExecution": {
+          "type": "number"
+        },
+        "timezone": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "JsonObject": {
+      "additionalProperties": {
+        "$ref": "#/definitions/JsonValue"
+      },
+      "type": "object"
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/JsonObject"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/JsonValue"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      ]
+    },
+    "NodeApiError": {
+      "description": "Class for instantiating an error in an API response, e.g. a 404 Not Found response,\nwith an HTTP error code, an error message and a description.",
+      "properties": {
+        "cause": {
+          "$ref": "#/definitions/Error"
+        },
+        "context": {
+          "$ref": "#/definitions/IDataObject"
+        },
+        "description": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "errorResponse": {
+          "$ref": "#/definitions/JsonObject"
+        },
+        "extra": {},
+        "functionality": {
+          "$ref": "#/definitions/Functionality"
+        },
+        "httpCode": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "level": {
+          "$ref": "#/definitions/ErrorLevel"
+        },
+        "lineNumber": {
+          "type": "number"
+        },
+        "message": {
+          "type": "string"
+        },
+        "messages": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "node": {
+          "$ref": "#/definitions/INode"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "setDefaultStatusCodeMessage": {
+          "description": "Set the error's message based on the HTTP status code."
+        },
+        "setDescriptionFromXml": {},
+        "stack": {
+          "type": "string"
+        },
+        "tags": {},
+        "timestamp": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "NodeConnectionType": {
+      "enum": [
+        "ai_agent",
+        "ai_chain",
+        "ai_document",
+        "ai_embedding",
+        "ai_languageModel",
+        "ai_memory",
+        "ai_outputParser",
+        "ai_reranker",
+        "ai_retriever",
+        "ai_textSplitter",
+        "ai_tool",
+        "ai_vectorStore",
+        "main"
+      ],
+      "type": "string"
+    },
+    "NodeOperationError": {
+      "description": "Class for instantiating an operational error, e.g. an invalid credentials error.",
+      "properties": {
+        "cause": {
+          "$ref": "#/definitions/Error"
+        },
+        "context": {
+          "$ref": "#/definitions/IDataObject"
+        },
+        "description": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "errorResponse": {
+          "$ref": "#/definitions/JsonObject"
+        },
+        "extra": {},
+        "functionality": {
+          "$ref": "#/definitions/Functionality"
+        },
+        "level": {
+          "$ref": "#/definitions/ErrorLevel"
+        },
+        "lineNumber": {
+          "type": "number"
+        },
+        "message": {
+          "type": "string"
+        },
+        "messages": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "type": "string"
+        },
+        "node": {
+          "$ref": "#/definitions/INode"
+        },
+        "packageName": {
+          "type": "string"
+        },
+        "stack": {
+          "type": "string"
+        },
+        "tags": {},
+        "timestamp": {
+          "type": "number"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "NodeParameterValue": {
+      "type": [
+        "null",
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "NodeParameterValueType": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/INodeParameterResourceLocator"
+        },
+        {
+          "$ref": "#/definitions/INodeParameters"
+        },
+        {
+          "properties": {
+            "attemptToConvertTypes": {
+              "type": "boolean"
+            },
+            "convertFieldsToString": {
+              "type": "boolean"
+            },
+            "mappingMode": {
+              "type": "string"
+            },
+            "matchingColumns": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/ResourceMapperField"
+              },
+              "type": "array"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "type": [
+                      "null",
+                      "string",
+                      "number",
+                      "boolean"
+                    ]
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "type": "object"
+        },
+        {
+          "properties": {
+            "combinator": {
+              "$ref": "#/definitions/FilterTypeCombinator"
+            },
+            "conditions": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "leftValue": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "$ref": "#/definitions/NodeParameterValue"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": [
+                          "null",
+                          "string",
+                          "number",
+                          "boolean"
+                        ]
+                      }
+                    ]
+                  },
+                  "operator": {
+                    "$ref": "#/definitions/FilterOperatorValue"
+                  },
+                  "rightValue": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "$ref": "#/definitions/NodeParameterValue"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": [
+                          "null",
+                          "string",
+                          "number",
+                          "boolean"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "options": {
+              "properties": {
+                "caseSensitive": {
+                  "type": "boolean"
+                },
+                "leftValue": {
+                  "type": "string"
+                },
+                "typeValidation": {
+                  "enum": [
+                    "loose",
+                    "strict"
+                  ],
+                  "type": "string"
+                },
+                "version": {
+                  "enum": [
+                    1,
+                    2
+                  ],
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "properties": {
+            "assignments": {
+              "items": {
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "$ref": "#/definitions/NodeParameterValue"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/NodeParameterValue"
+          },
+          "type": "array"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/INodeParameters"
+          },
+          "type": "array"
+        },
+        {
+          "items": {
+            "$ref": "#/definitions/INodeParameterResourceLocator"
+          },
+          "type": "array"
+        },
+        {
+          "items": {
+            "properties": {
+              "attemptToConvertTypes": {
+                "type": "boolean"
+              },
+              "convertFieldsToString": {
+                "type": "boolean"
+              },
+              "mappingMode": {
+                "type": "string"
+              },
+              "matchingColumns": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "schema": {
+                "items": {
+                  "$ref": "#/definitions/ResourceMapperField"
+                },
+                "type": "array"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": [
+                        "null",
+                        "string",
+                        "number",
+                        "boolean"
+                      ]
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "type": [
+            "null",
+            "string",
+            "number",
+            "boolean"
+          ]
+        }
+      ]
+    },
+    "Omit_IHttpRequestOptions__url___skipSslCertificateValidation__": {
+      "properties": {
+        "abortSignal": {
+          "$ref": "#/definitions/GenericAbortSignal"
+        },
+        "arrayFormat": {
+          "enum": [
+            "brackets",
+            "comma",
+            "indices",
+            "repeat"
+          ],
+          "type": "string"
+        },
+        "auth": {
+          "properties": {
+            "password": {
+              "type": "string"
+            },
+            "sendImmediately": {
+              "type": "boolean"
+            },
+            "username": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "baseURL": {
+          "type": "string"
+        },
+        "body": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/URLSearchParams"
+            },
+            {
+              "additionalProperties": false,
+              "patternProperties": {
+                "^[0-9]+$": {
+                  "type": "number"
+                }
+              },
+              "properties": {
+                "BYTES_PER_ELEMENT": {
+                  "type": "number"
+                },
+                "__@toStringTag@3223": {
+                  "const": "Uint8Array",
+                  "type": "string"
+                },
+                "buffer": {
+                  "$ref": "#/definitions/ArrayBufferLike"
+                },
+                "byteLength": {
+                  "type": "number"
+                },
+                "byteOffset": {
+                  "type": "number"
+                },
+                "length": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            {
+              "$ref": "#/definitions/import___home_sbuglione_source_repos_ol-n8n_node_modules_n8n-workflow_node_modules_form-data_index__"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/GenericValue"
+              },
+              "type": "array"
+            },
+            {
+              "type": [
+                "null",
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          ]
+        },
+        "disableFollowRedirect": {
+          "type": "boolean"
+        },
+        "encoding": {
+          "enum": [
+            "arraybuffer",
+            "blob",
+            "document",
+            "json",
+            "stream",
+            "text"
+          ],
+          "type": "string"
+        },
+        "headers": {
+          "$ref": "#/definitions/IDataObject"
+        },
+        "ignoreHttpStatusErrors": {
+          "type": "boolean"
+        },
+        "json": {
+          "type": "boolean"
+        },
+        "method": {
+          "enum": [
+            "DELETE",
+            "GET",
+            "HEAD",
+            "PATCH",
+            "POST",
+            "PUT"
+          ],
+          "type": "string"
+        },
+        "proxy": {
+          "properties": {
+            "auth": {
+              "properties": {
+                "password": {
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "host": {
+              "type": "string"
+            },
+            "port": {
+              "type": "number"
+            },
+            "protocol": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "qs": {
+          "$ref": "#/definitions/IDataObject"
+        },
+        "returnFullResponse": {
+          "type": "boolean"
+        },
+        "timeout": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "PostReceiveAction": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/IPostReceiveBinaryData"
+        },
+        {
+          "$ref": "#/definitions/IPostReceiveFilter"
+        },
+        {
+          "$ref": "#/definitions/IPostReceiveLimit"
+        },
+        {
+          "$ref": "#/definitions/IPostReceiveRootProperty"
+        },
+        {
+          "$ref": "#/definitions/IPostReceiveSet"
+        },
+        {
+          "$ref": "#/definitions/IPostReceiveSetKeyValue"
+        },
+        {
+          "$ref": "#/definitions/IPostReceiveSort"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "Record_string_GenericValue_": {
+      "type": "object"
+    },
+    "RelatedExecution": {
+      "properties": {
+        "executionContext": {
+          "$ref": "#/definitions/_version_1_establishedAt_number_source__internal___error___manual___cli___integrated___retry___trigger___webhook___evaluation___chat__parentExecutionId__string_undefined_credentials__string_undefined__",
+          "description": "Execution context carries per-execution metadata throughout workflow lifecycle\nEstablished at execution start and propagated to sub-workflows/error workflows"
+        },
+        "executionId": {
+          "type": "string"
+        },
+        "shouldResume": {
+          "type": "boolean"
+        },
+        "workflowId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ResourceMapperField": {
+      "properties": {
+        "canBeUsedToMatch": {
+          "type": "boolean"
+        },
+        "defaultMatch": {
+          "type": "boolean"
+        },
+        "defaultValue": {
+          "type": [
+            "null",
+            "string",
+            "number",
+            "boolean"
+          ]
+        },
+        "display": {
+          "type": "boolean"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/definitions/INodePropertyOptions"
+          },
+          "type": "array"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "removed": {
+          "type": "boolean"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "enum": [
+            "array",
+            "boolean",
+            "dateTime",
+            "form-fields",
+            "jwt",
+            "number",
+            "object",
+            "options",
+            "string",
+            "string-alphanumeric",
+            "time",
+            "url"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "SharedArrayBuffer": {
+      "properties": {
+        "__@species@12610": {
+          "$ref": "#/definitions/SharedArrayBuffer"
+        },
+        "__@toStringTag@3223": {
+          "const": "SharedArrayBuffer",
+          "type": "string"
+        },
+        "byteLength": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "URLSearchParams": {
+      "description": "The `URLSearchParams` API provides read and write access to the query of a `URL`. The `URLSearchParams` class can also be used standalone with one of the\nfour following constructors.\nThe `URLSearchParams` class is also available on the global object.\n\nThe WHATWG `URLSearchParams` interface and the `querystring` module have\nsimilar purpose, but the purpose of the `querystring` module is more\ngeneral, as it allows the customization of delimiter characters (`&#x26;` and `=`).\nOn the other hand, this API is designed purely for URL query strings.\n\n```js\nconst myURL = new URL('https://example.org/?abc=123');\nconsole.log(myURL.searchParams.get('abc'));\n// Prints 123\n\nmyURL.searchParams.append('abc', 'xyz');\nconsole.log(myURL.href);\n// Prints https://example.org/?abc=123&#x26;abc=xyz\n\nmyURL.searchParams.delete('abc');\nmyURL.searchParams.set('a', 'b');\nconsole.log(myURL.href);\n// Prints https://example.org/?a=b\n\nconst newSearchParams = new URLSearchParams(myURL.searchParams);\n// The above is equivalent to\n// const newSearchParams = new URLSearchParams(myURL.search);\n\nnewSearchParams.append('a', 'c');\nconsole.log(myURL.href);\n// Prints https://example.org/?a=b\nconsole.log(newSearchParams.toString());\n// Prints a=b&#x26;a=c\n\n// newSearchParams.toString() is implicitly called\nmyURL.search = newSearchParams;\nconsole.log(myURL.href);\n// Prints https://example.org/?a=b&#x26;a=c\nnewSearchParams.delete('a');\nconsole.log(myURL.href);\n// Prints https://example.org/?a=b&#x26;a=c\n```",
+      "properties": {
+        "size": {
+          "description": "The total number of parameter entries.",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "WorkflowImportShape": {
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "activeVersionId": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "connections": {
+          "$ref": "#/definitions/IConnections"
+        },
+        "description": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "meta": {
+          "$ref": "#/definitions/WorkflowMetadata"
+        },
+        "name": {
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/definitions/INode"
+          },
+          "type": "array"
+        },
+        "parentFolderId": {
+          "type": "string"
+        },
+        "pinData": {
+          "$ref": "#/definitions/IPinData"
+        },
+        "projectId": {
+          "type": "string"
+        },
+        "settings": {
+          "$ref": "#/definitions/IWorkflowSettings"
+        },
+        "tags": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/import___home_sbuglione_source_repos_ol-n8n_node_modules__n8n_rest-api-client_dist_tags___with___resolution-mode___import____.t"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "uiContext": {
+          "type": "string"
+        },
+        "versionId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "WorkflowMetadata": {
+      "properties": {
+        "instanceId": {
+          "type": "string"
+        },
+        "onboardingId": {
+          "type": "string"
+        },
+        "templateCredsSetupCompleted": {
+          "type": "boolean"
+        },
+        "templateId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ZodUnion": {
+      "enum": [
+        "chat",
+        "cli",
+        "error",
+        "evaluation",
+        "integrated",
+        "internal",
+        "manual",
+        "retry",
+        "trigger",
+        "webhook"
+      ],
+      "type": "string"
+    },
+    "import___home_sbuglione_source_repos_ol-n8n_node_modules__n8n_rest-api-client_dist_tags___with___resolution-mode___import____.t": {
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        },
+        "usageCount": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "import___home_sbuglione_source_repos_ol-n8n_node_modules_n8n-workflow_node_modules_form-data_index__": {
+      "properties": {
+        "closed": {
+          "description": "Is true after 'close' has been emitted.",
+          "type": "boolean"
+        },
+        "destroyed": {
+          "description": "Is `true` after `readable.destroy()` has been called.",
+          "type": "boolean"
+        },
+        "errored": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Error"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Returns error if the stream has been destroyed with an error."
+        },
+        "readable": {
+          "description": "Is `true` if it is safe to call `readable.read()`, which means\nthe stream has not been destroyed or emitted `'error'` or `'end'`.",
+          "type": "boolean"
+        },
+        "readableAborted": {
+          "description": "Returns whether the stream was destroyed or errored before emitting `'end'`.",
+          "type": "boolean"
+        },
+        "readableDidRead": {
+          "description": "Returns whether `'data'` has been emitted.",
+          "type": "boolean"
+        },
+        "readableEncoding": {
+          "anyOf": [
+            {
+              "enum": [
+                "ascii",
+                "base64",
+                "base64url",
+                "binary",
+                "hex",
+                "latin1",
+                "ucs-2",
+                "ucs2",
+                "utf-8",
+                "utf16le",
+                "utf8"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Getter for the property `encoding` of a given `Readable` stream. The `encoding`property can be set using the `readable.setEncoding()` method."
+        },
+        "readableEnded": {
+          "description": "Becomes `true` when `'end'` event is emitted.",
+          "type": "boolean"
+        },
+        "readableFlowing": {
+          "description": "This property reflects the current state of a `Readable` stream as described\nin the `Three states` section.",
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "readableHighWaterMark": {
+          "description": "Returns the value of `highWaterMark` passed when creating this `Readable`.",
+          "type": "number"
+        },
+        "readableLength": {
+          "description": "This property contains the number of bytes (or objects) in the queue\nready to be read. The value provides introspection data regarding\nthe status of the `highWaterMark`.",
+          "type": "number"
+        },
+        "readableObjectMode": {
+          "description": "Getter for the property `objectMode` of a given `Readable` stream.",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "_version_1_establishedAt_number_source__internal___error___manual___cli___integrated___retry___trigger___webhook___evaluation___chat__parentExecutionId__string_undefined_credentials__string_undefined__": {
+      "properties": {
+        "credentials": {
+          "type": "string"
+        },
+        "establishedAt": {
+          "type": "number"
+        },
+        "parentExecutionId": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/ZodUnion"
+        },
+        "version": {
+          "const": 1,
+          "type": "number"
+        }
+      },
+      "type": "object"
     }
-  },
-  "additionalProperties": true
+  }
 }

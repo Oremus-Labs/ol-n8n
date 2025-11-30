@@ -1,0 +1,103 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import process from 'node:process';
+import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+import axios from 'axios';
+import glob from 'glob';
+import Ajv from 'ajv';
+
+const require = createRequire(import.meta.url);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const restClientPath = path.resolve(__dirname, '../node_modules/@n8n/rest-api-client/dist/index.cjs');
+const { makeRestApiRequest } = require(restClientPath);
+
+const { N8N_API_URL, N8N_API_KEY, N8N_PUSH_REF } = process.env;
+
+if (!N8N_API_URL) {
+  console.error('[import_all] N8N_API_URL is required');
+  process.exit(1);
+}
+
+if (!N8N_API_KEY) {
+  console.error('[import_all] N8N_API_KEY is required');
+  process.exit(1);
+}
+
+const baseUrl = `${N8N_API_URL.replace(/\/$/, '')}/api/v1`;
+const context = {
+  baseUrl,
+  pushRef: N8N_PUSH_REF && N8N_PUSH_REF.length > 0 ? N8N_PUSH_REF : 'git-sync',
+};
+
+axios.defaults.headers.common['X-N8N-API-KEY'] = N8N_API_KEY;
+
+const validatorPromise = (async () => {
+  const schemaPath = new URL('./workflow-schema.json', import.meta.url);
+  const schema = JSON.parse(await readFile(schemaPath, 'utf8'));
+  const ajv = new Ajv({ allErrors: true, strict: false });
+  return ajv.compile(schema);
+})();
+
+async function main() {
+  const workflowFiles = glob.sync('workflows/**/workflow.json', { nodir: true });
+  const validateWorkflow = await validatorPromise;
+
+  if (workflowFiles.length === 0) {
+    console.log('[import_all] No workflow.json files found');
+    return;
+  }
+
+  let failures = 0;
+
+  const logFailure = (file, error) => {
+    failures += 1;
+    console.error(`[import_all] Failed to import ${file}`);
+    if (error?.response?.data) {
+      console.error(JSON.stringify(error.response.data));
+    } else if (error?.stack) {
+      console.error(error.stack);
+    } else {
+      console.error(error);
+    }
+  };
+
+  for (const file of workflowFiles) {
+    try {
+      const raw = await readFile(file, 'utf8');
+      const workflow = JSON.parse(raw);
+      const isValid = validateWorkflow(workflow);
+      if (!isValid) {
+        const validationErrors = validateWorkflow.errors?.map((err) => `${err.instancePath || '/'} ${err.message}`).join('; ');
+        throw new Error(`Schema validation failed: ${validationErrors ?? 'Unknown error'}`);
+      }
+      const workflowName = workflow.name ?? path.basename(path.dirname(file));
+      const hasId = typeof workflow.id === 'string' && workflow.id.trim() !== '';
+      const endpoint = hasId ? `/workflows/${workflow.id}` : '/workflows';
+      const method = hasId ? 'PUT' : 'POST';
+
+      if (!hasId && workflow.id) {
+        delete workflow.id;
+      }
+
+      await makeRestApiRequest(context, method, endpoint, { workflow });
+      console.log(`[import_all] ${method} ${endpoint} (${workflowName})`);
+    } catch (error) {
+      logFailure(file, error);
+    }
+  }
+
+  if (failures > 0) {
+    console.error(`[import_all] Completed with ${failures} failure(s)`);
+    process.exit(1);
+  }
+
+  console.log(`[import_all] Successfully imported ${workflowFiles.length} workflow(s)`);
+}
+
+main().catch((error) => {
+  console.error('[import_all] Unexpected failure');
+  console.error(error);
+  process.exit(1);
+});
