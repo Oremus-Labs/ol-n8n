@@ -10,11 +10,11 @@
     "postinstall": "node ci/scripts/postinstall-patch.mjs"
   },
   "devDependencies": {
-    "@n8n/rest-api-client": "^1.25.2",
     "typescript": "^5.6.3",
     "typescript-json-schema": "^0.67.0"
   },
   "dependencies": {
+    "@n8n/rest-api-client": "^1.25.2",
     "ajv": "^8.17.1",
     "axios": "^1.13.2",
     "glob": "^8.1.0"

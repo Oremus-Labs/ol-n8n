@@ -5,7 +5,6 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
-import axios from 'axios';
 import glob from 'glob';
 import Ajv from 'ajv';
 
@@ -29,7 +28,7 @@ function resolveModuleRoot() {
 
 const moduleRoot = resolveModuleRoot();
 const restClientPath = path.join(moduleRoot, '@n8n/rest-api-client/dist/index.cjs');
-const { makeRestApiRequest } = require(restClientPath);
+const { request } = require(restClientPath);
 
 const { N8N_API_URL, N8N_API_KEY, N8N_PUSH_REF } = process.env;
 
@@ -49,8 +48,6 @@ const context = {
   pushRef: N8N_PUSH_REF && N8N_PUSH_REF.length > 0 ? N8N_PUSH_REF : 'git-sync',
 };
 
-axios.defaults.headers.common['X-N8N-API-KEY'] = N8N_API_KEY;
-
 const validatorPromise = (async () => {
   const schemaPath = new URL('./workflow-schema.json', import.meta.url);
   const schema = JSON.parse(await readFile(schemaPath, 'utf8'));
@@ -64,6 +61,40 @@ function resolveWorkflowsDir() {
   const fallback = path.resolve(process.cwd(), 'workflows');
   const target = argDir ?? envDir ?? fallback;
   return path.isAbsolute(target) ? target : path.resolve(process.cwd(), target);
+}
+
+function sanitizeWorkflowObject(workflow, { isUpdate }) {
+  const clone = JSON.parse(JSON.stringify(workflow));
+  const readOnlyFields = [
+    'versionId',
+    'activeVersionId',
+    'updatedAt',
+    'createdAt',
+    'staticData',
+    'triggerCount',
+    'versionCounter',
+    'isArchived',
+    'ownerId',
+    'meta',
+  ];
+  for (const field of readOnlyFields) {
+    if (field in clone) {
+      delete clone[field];
+    }
+  }
+  if (!isUpdate && clone.id) {
+    delete clone.id;
+  }
+  if ('active' in clone) {
+    delete clone.active;
+  }
+  if ('pinData' in clone) {
+    delete clone.pinData;
+  }
+  if (!clone.settings || typeof clone.settings !== 'object') {
+    clone.settings = {};
+  }
+  return clone;
 }
 
 async function main() {
@@ -106,14 +137,21 @@ async function main() {
       }
       const workflowName = workflow.name ?? path.basename(path.dirname(file));
       const hasId = typeof workflow.id === 'string' && workflow.id.trim() !== '';
+      const sanitized = sanitizeWorkflowObject(workflow, { isUpdate: hasId });
       const endpoint = hasId ? `/workflows/${workflow.id}` : '/workflows';
       const method = hasId ? 'PUT' : 'POST';
 
-      if (!hasId && workflow.id) {
-        delete workflow.id;
-      }
-
-      await makeRestApiRequest(context, method, endpoint, { workflow });
+      await request({
+        method,
+        baseURL: context.baseUrl,
+        endpoint,
+        headers: {
+          'push-ref': context.pushRef,
+          'X-N8N-API-KEY': N8N_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        data: sanitized,
+      });
       console.log(`[import_all] ${method} ${endpoint} (${workflowName})`);
     } catch (error) {
       logFailure(file, error);
