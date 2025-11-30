@@ -89,16 +89,13 @@ The Helm chart at `ol-kubernetes-cluster/apps/workloads/n8n/chart` now exposes `
 
 ### Required Kubernetes Secrets
 
-Create the following secret in the `n8n` namespace before enabling the values:
+Create the following secrets in the `n8n` namespace (all are now sourced from 1Password items and rendered automatically by Helm/Argo):
 
-1. **`n8n-sync-secrets`** – API token for the in-cluster n8n instance.
-2. **`n8n-postgresql`** – Managed by the 1Password Operator. Must contain `password` and `postgres-password` fields so Bitnami PostgreSQL reuses the same credentials after every sync or pod restart.
-3. **`n8n-redis`** – Also sourced from 1Password. Needs the `redis-password` field so the queue + worker deployments authenticate reliably after rollouts.
+1. **`n8n-sync-secrets`** – Stores the `n8n-api-key` used by the in-cluster sync CronJob.
+2. **`n8n-postgresql`** – Must expose `password` and `postgres-password` so Bitnami PostgreSQL reuses the same credentials after every sync or pod restart.
+3. **`n8n-redis`** – Provides the `redis-password` consumed by the queue + worker deployments.
 
-```
-kubectl -n n8n create secret generic n8n-sync-secrets \
-  --from-literal=n8n-api-key=<personal-api-key>
-```
+With the 1Password Operator installed, defining the vault items (and referencing their `itemPath` in the Helm values) is all that’s required—no `kubectl create secret ...` commands or manual rotations needed anymore.
 
 If you prefer SSH cloning, create the optional `n8n-sync-git` secret (deploy key + known_hosts) and set `gitSync.gitSecret.name` accordingly. Otherwise leave it empty and the CronJob will clone via HTTPS anonymously.
 
