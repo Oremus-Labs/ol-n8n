@@ -36,7 +36,7 @@
 
 ### Constraints & Notes
 - GitHub token (`GITHUB_TOKEN`) and n8n API key must be present in the environment for HTTP nodes.
-- `MCP_SUPERGATEWAY_TOKEN` stores the Bearer token used by `supergateway`/curl. Retrieve it from your secrets manager or `.codex/config.toml` and load with `export MCP_SUPERGATEWAY_TOKEN=...` before issuing MCP calls.
+- `MCP_SUPERGATEWAY_TOKEN` stores the Bearer token used by `supergateway`/curl. The current value lives inline in `.codex/config.toml` under `[mcp_servers.n8n_mcp]` (see the `Authorization: Bearer …` header). Copy that string into your shell session with `export MCP_SUPERGATEWAY_TOKEN=<same value>` before running any MCP curl commands.
 - n8n workflows exporting themselves must remove read-only fields (`active`, `tags`, runtime data) before hitting the git filesystem.
 - Use slugified workflow names to avoid path clashes; when manual folder overrides are needed, store metadata inside the workflow (e.g., via `Set` node).
 - Avoid recursive sync: never let Git Sync import n8n-to-Repo JSON or vice versa unless explicitly intended.
