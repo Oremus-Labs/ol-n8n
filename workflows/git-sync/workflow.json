@@ -191,7 +191,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{$json.body}}",
+        "jsonBody": "={{JSON.stringify($json.body)}}",
         "options": {
           "response": {
             "response": {
@@ -230,7 +230,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{$json.body}}",
+        "jsonBody": "={{JSON.stringify($json.body)}}",
         "options": {
           "response": {
             "response": {
