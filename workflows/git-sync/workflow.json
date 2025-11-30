@@ -34,6 +34,21 @@
     },
     {
       "parameters": {
+        "path": "git-sync-mcp",
+        "httpMethod": "POST",
+        "respond": false
+      },
+      "id": "webhookTrigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        300,
+        620
+      ]
+    },
+    {
+      "parameters": {
         "mode": "append"
       },
       "id": "triggerMerge",
@@ -42,7 +57,20 @@
       "typeVersion": 3.2,
       "position": [
         520,
-        410
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "webhookMerge",
+      "name": "Merge Webhook",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        520,
+        470
       ]
     },
     {
@@ -134,7 +162,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const workflow = $json;\nconst prevPath = $node[\"Select Workflow Files\"].item.json.path;\nconst path = prevPath || 'workflows/unknown/workflow.json';\nconst apiBase = ($env.N8N_API_URL || 'https://n8n.oremuslabs.app').replace(/\\/$/, '');\nconst workflowId = workflow.id;\nconst hasValidId = typeof workflowId === 'string' && workflowId.trim() !== '';\nconst cleanedWorkflow = {\n  id: workflowId,\n  name: workflow.name,\n  nodes: workflow.nodes,\n  connections: workflow.connections,\n  active: workflow.active ?? false,\n  settings: workflow.settings ?? {},\n  tags: workflow.tags ?? []\n};\nreturn {\n  json: {\n    hasValidId,\n    workflowId,\n    apiBase,\n    body: cleanedWorkflow,\n    sourcePath: path,\n    workflowName: workflow.name || 'Unnamed Workflow'\n  }\n};"
+        "functionCode": "const workflow = $json;\nconst sourceItems = $items(\"Select Workflow Files\", 0, $itemIndex) || [];\nconst prevPath = sourceItems[0]?.json?.path;\nconst path = prevPath || 'workflows/unknown/workflow.json';\nconst apiBase = ($env.N8N_API_URL || 'https://n8n.oremuslabs.app').replace(/\\/$/, '');\nconst workflowId = workflow.id;\nconst hasValidId = typeof workflowId === 'string' && workflowId.trim() !== '';\nconst cleanedWorkflow = {\n  name: workflow.name,\n  nodes: workflow.nodes,\n  connections: workflow.connections,\n  settings: workflow.settings ?? {}\n};\nreturn {\n  json: {\n    hasValidId,\n    workflowId,\n    apiBase,\n    body: cleanedWorkflow,\n    sourcePath: path,\n    workflowName: workflow.name || 'Unnamed Workflow'\n  }\n};"
       },
       "id": "normalizeWorkflow",
       "name": "Prepare Workflow Data",
@@ -280,7 +308,29 @@
         ]
       ]
     },
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Merge Webhook",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
     "Trigger Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Webhook": {
       "main": [
         [
           {
@@ -354,8 +404,10 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "callerPolicy": "workflowsFromSameOwner"
   }
 }
