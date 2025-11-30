@@ -57,6 +57,10 @@
             {
               "name": "Accept",
               "value": "application/vnd.github+json"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.GITHUB_TOKEN}}"
             }
           ]
         },
@@ -103,6 +107,10 @@
             {
               "name": "Accept",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.GITHUB_TOKEN}}"
             }
           ]
         },
