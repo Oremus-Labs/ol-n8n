@@ -1,0 +1,9 @@
+.git/
+node_modules/
+dist/
+build/
+*.log
+*.lock
+**/__pycache__/
+**/*.min.js
+**/*.tgz
