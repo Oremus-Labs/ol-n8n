@@ -1,0 +1,54 @@
+{
+  "name": "Test Sync Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": [
+          {
+            "mode": "everyX",
+            "unit": "hours",
+            "value": 1
+          }
+        ]
+      },
+      "id": "scheduleNode",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const now = new Date();\nreturn {\n  json: {\n    message: 'Git sync test workflow executed successfully',\n    timestamp: now.toISOString(),\n    status: 'success'\n  }\n};"
+      },
+      "id": "functionNode",
+      "name": "Test Function",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1.3,
+      "position": [
+        460,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Test Function",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

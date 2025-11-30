@@ -57,9 +57,7 @@
             }
           ]
         },
-        "options": {
-          "onError": "continueRegularOutput"
-        }
+        "options": {}
       },
       "id": "listRepoTree",
       "name": "List Repo Tree",
@@ -96,9 +94,7 @@
             }
           ]
         },
-        "options": {
-          "onError": "continueRegularOutput"
-        }
+        "options": {}
       },
       "id": "fetchWorkflow",
       "name": "Fetch Workflow JSON",
@@ -137,7 +133,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const workflow = $json.workflow;\nconst path = $json.path;\nconst apiBase = $json.apiBase;\nconst resolvedId = $json.resolvedWorkflowId;\nconst url = resolvedId ? `${apiBase}/api/v1/workflows/${resolvedId}` : `${apiBase}/api/v1/workflows`;\nreturn {\n  json: {\n    method: resolvedId ? 'PUT' : 'POST',\n    url,\n    body: workflow,\n    sourcePath: path,\n    workflowName: $json.workflowName\n  }\n};"
+        "functionCode": "const workflow = $json.workflow;\nconst path = $json.path;\nconst apiBase = $json.apiBase;\nconst resolvedId = $json.resolvedWorkflowId;\nconst url = resolvedId ? `${apiBase}/api/v1/workflows/${resolvedId}` : `${apiBase}/api/v1/workflows`;\n\n// Clean workflow payload - remove fields that shouldn't be sent to API\nconst cleanedWorkflow = { ...workflow };\ndelete cleanedWorkflow.id;\ndelete cleanedWorkflow.createdAt;\ndelete cleanedWorkflow.updatedAt;\ndelete cleanedWorkflow.versionId;\n\n// For updates, preserve the ID in the URL; for creates, let n8n assign it\nif (resolvedId) {\n  cleanedWorkflow.id = resolvedId;\n}\n\nreturn {\n  json: {\n    method: resolvedId ? 'PUT' : 'POST',\n    url,\n    body: cleanedWorkflow,\n    sourcePath: path,\n    workflowName: $json.workflowName\n  }\n};"
       },
       "id": "prepareUpsert",
       "name": "Prepare Upsert Request",
@@ -167,11 +163,9 @@
           ]
         },
         "sendBody": true,
-        "bodyParametersJson": "={{JSON.stringify($json.body)}}",
+        "bodyParametersJson": "={{$json.body}}",
         "requestMethod": "={{$json.method}}",
-        "options": {
-          "onError": "continueRegularOutput"
-        }
+        "options": {}
       },
       "id": "upsertWorkflow",
       "name": "Upsert Workflow",
