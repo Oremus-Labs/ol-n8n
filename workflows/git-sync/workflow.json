@@ -191,7 +191,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{JSON.stringify($json.body)}}",
+        "jsonBody": "={{$json.body}}",
         "options": {
           "response": {
             "response": {
@@ -230,7 +230,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{JSON.stringify($json.body)}}",
+        "jsonBody": "={{$json.body}}",
         "options": {
           "response": {
             "response": {
@@ -340,7 +340,7 @@
           {
             "node": "Create Workflow (POST)",
             "type": "main",
-            "index": 0
+            "index": 1
           }
         ]
       ]
