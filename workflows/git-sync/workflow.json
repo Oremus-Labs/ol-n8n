@@ -49,6 +49,7 @@
       "parameters": {
         "url": "https://api.github.com/repos/Oremus-Labs/ol-n8n/git/trees/main?recursive=1",
         "responseFormat": "json",
+        "authentication": "none",
         "headerParameters": {
           "parameter": [
             {
@@ -57,7 +58,10 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "onError": "continueRegularOutput",
+          "retryOnFail": true
+        }
       },
       "id": "listRepoTree",
       "name": "List Repo Tree",
@@ -85,7 +89,7 @@
       "parameters": {
         "url": "={{$json.rawUrl}}",
         "responseFormat": "json",
-        "dataPropertyName": "workflow",
+        "authentication": "none",
         "headerParameters": {
           "parameter": [
             {
@@ -94,7 +98,9 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "onError": "continueRegularOutput"
+        }
       },
       "id": "fetchWorkflow",
       "name": "Fetch Workflow JSON",
@@ -107,10 +113,10 @@
     },
     {
       "parameters": {
-        "functionCode": "const workflow = $json.workflow ?? $json;\nconst path = $json.path || 'workflows/unknown/workflow.json';\nconst apiBase = ($env.N8N_API_URL || 'https://n8n.oremuslabs.app').replace(/\\/$/, '');\nconst parts = path.split('/');\nconst derivedName = parts.length > 1 ? parts[1] : 'workflow';\nreturn {\n  json: {\n    workflow,\n    path,\n    rawUrl: $json.rawUrl,\n    apiBase,\n    workflowName: workflow.name || derivedName\n  }\n};"
+        "functionCode": "// Get the workflow from previous node (Fetch Workflow JSON)\nconst workflow = $json;\nconst prevPath = $('Select Workflow Files').item.json.path;\n\n// Extract workflow info\nconst path = prevPath || 'workflows/unknown/workflow.json';\nconst apiBase = ($env.N8N_API_URL || 'https://n8n.oremuslabs.app').replace(/\\/$/, '');\n\n// Determine if update or create\nconst workflowId = workflow.id;\nconst hasValidId = typeof workflowId === 'string' && workflowId.trim() !== '';\n\nconst method = hasValidId ? 'PUT' : 'POST';\nconst url = hasValidId ? `${apiBase}/api/v1/workflows/${workflowId}` : `${apiBase}/api/v1/workflows`;\n\n// Clean the workflow - remove runtime-only fields\nconst cleanedWorkflow = { ...workflow };\ndelete cleanedWorkflow.createdAt;\ndelete cleanedWorkflow.updatedAt;\ndelete cleanedWorkflow.versionId;\n\nreturn {\n  json: {\n    method,\n    url,\n    body: cleanedWorkflow,\n    sourcePath: path,\n    workflowName: workflow.name || 'Unnamed Workflow'\n  }\n};"
       },
       "id": "normalizeWorkflow",
-      "name": "Normalize Workflow Payload",
+      "name": "Prepare API Request",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1.3,
       "position": [
@@ -120,36 +126,10 @@
     },
     {
       "parameters": {
-        "functionCode": "const items = $input.all();\nif (!items.length) {\n  return items;\n}\nconst apiBase = items[0].json.apiBase;\nlet existing = [];\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `${apiBase}/api/v1/workflows`,\n    headers: { 'X-N8N-API-KEY': $env.N8N_API_KEY },\n    json: true\n  });\n  existing = Array.isArray(response?.data) ? response.data : (Array.isArray(response) ? response : []);\n} catch (error) {\n  existing = [];\n}\nreturn items.map(item => {\n  const name = item.json.workflowName;\n  const match = existing.find(entry => entry.name === name);\n  const fallbackId = item.json.workflow?.id || null;\n  return {\n    json: {\n      ...item.json,\n      resolvedWorkflowId: match?.id || fallbackId\n    }\n  };\n});"
-      },
-      "id": "resolveWorkflow",
-      "name": "Resolve Workflow Target",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1.3,
-      "position": [
-        1680,
-        410
-      ]
-    },
-    {
-      "parameters": {
-        "functionCode": "const workflow = $json.workflow;\nconst path = $json.path;\nconst apiBase = $json.apiBase;\nconst resolvedId = $json.resolvedWorkflowId;\nconst url = resolvedId ? `${apiBase}/api/v1/workflows/${resolvedId}` : `${apiBase}/api/v1/workflows`;\n\n// Clean workflow payload - remove fields that shouldn't be sent to API\nconst cleanedWorkflow = { ...workflow };\ndelete cleanedWorkflow.id;\ndelete cleanedWorkflow.createdAt;\ndelete cleanedWorkflow.updatedAt;\ndelete cleanedWorkflow.versionId;\n\n// For updates, preserve the ID in the URL; for creates, let n8n assign it\nif (resolvedId) {\n  cleanedWorkflow.id = resolvedId;\n}\n\nreturn {\n  json: {\n    method: resolvedId ? 'PUT' : 'POST',\n    url,\n    body: cleanedWorkflow,\n    sourcePath: path,\n    workflowName: $json.workflowName\n  }\n};"
-      },
-      "id": "prepareUpsert",
-      "name": "Prepare Upsert Request",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1.3,
-      "position": [
-        1900,
-        410
-      ]
-    },
-    {
-      "parameters": {
         "url": "={{$json.url}}",
-        "responseFormat": "json",
+        "authentication": "none",
+        "method": "={{$json.method}}",
         "sendHeaders": true,
-        "jsonParameters": true,
         "headerParameters": {
           "parameter": [
             {
@@ -163,16 +143,22 @@
           ]
         },
         "sendBody": true,
-        "bodyParametersJson": "={{$json.body}}",
-        "requestMethod": "={{$json.method}}",
-        "options": {}
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{JSON.stringify($json.body)}}",
+        "responseFormat": "json",
+        "options": {
+          "onError": "continueRegularOutput",
+          "retryOnFail": true,
+          "maxRetries": 3
+        }
       },
       "id": "upsertWorkflow",
       "name": "Upsert Workflow",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2140,
+        1660,
         410
       ]
     }
@@ -237,40 +223,18 @@
       "main": [
         [
           {
-            "node": "Normalize Workflow Payload",
+            "node": "Prepare API Request",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Prepare Upsert Request": {
+    "Prepare API Request": {
       "main": [
         [
           {
             "node": "Upsert Workflow",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalize Workflow Payload": {
-      "main": [
-        [
-          {
-            "node": "Resolve Workflow Target",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Resolve Workflow Target": {
-      "main": [
-        [
-          {
-            "node": "Prepare Upsert Request",
             "type": "main",
             "index": 0
           }
