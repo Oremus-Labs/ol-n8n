@@ -21,14 +21,14 @@
 
 ### MCP Execution Details
 - MCP bridge uses `supergateway` pointed at `https://8n8.oremuslabs.app/mcp-server/http` with headers:
-  - `Authorization: Bearer <token>`
+  - `Authorization: Bearer $MCP_SUPERGATEWAY_TOKEN`
   - `Accept: application/json, text/event-stream`
 - Available tools: `execute_workflow`, `get_workflow_details`, `search_workflows`.
 - Trigger Git Sync via:
   ```shell
   curl -sS -X POST https://8n8.oremuslabs.app/mcp-server/http \
     -H "Content-Type: application/json" \
-    -H "Authorization: Bearer <token>" \
+    -H "Authorization: Bearer ${MCP_SUPERGATEWAY_TOKEN}" \
     -H "Accept: application/json, text/event-stream" \
     -d '{"jsonrpc":"2.0","id":"1","method":"tools/call","params":{"name":"execute_workflow","arguments":{"workflowId":"QNoVZU40nl4mmTEN","inputs":{"type":"webhook","webhookData":{"method":"POST"}}}}}'
   ```
@@ -36,6 +36,7 @@
 
 ### Constraints & Notes
 - GitHub token (`GITHUB_TOKEN`) and n8n API key must be present in the environment for HTTP nodes.
+- `MCP_SUPERGATEWAY_TOKEN` stores the Bearer token used by `supergateway`/curl. Retrieve it from your secrets manager or `.codex/config.toml` and load with `export MCP_SUPERGATEWAY_TOKEN=...` before issuing MCP calls.
 - n8n workflows exporting themselves must remove read-only fields (`active`, `tags`, runtime data) before hitting the git filesystem.
 - Use slugified workflow names to avoid path clashes; when manual folder overrides are needed, store metadata inside the workflow (e.g., via `Set` node).
 - Avoid recursive sync: never let Git Sync import n8n-to-Repo JSON or vice versa unless explicitly intended.
