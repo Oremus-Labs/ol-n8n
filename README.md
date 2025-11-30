@@ -47,7 +47,7 @@ Each phase builds on the previous one. We will update the status column (✅/�
 Phase 2 shipped the first set of contributor utilities:
 
 - `ci/export_all.sh` – pull every workflow from any n8n instance via REST and mirror it into `workflows/`.
-- `ci/import_all.mjs` (invoked via `npm run import`) – push all tracked workflows into a target instance (idempotent create/update) after validating the payloads against the official SDK schema.
+- `ci/import_all.mjs` (invoked via `npm run import`) – push all tracked workflows into a target instance (idempotent create/update). It relies on the [`N8nApiClient`](https://github.com/czlonkowski/n8n-mcp) from n8n-mcp to clean payloads before hitting the API.
 - `npm run validate` – schema/policy checks for every `workflow.json` (ensures valid structure and prevents committing `active: true`).
 
 ### Requirements
@@ -55,6 +55,7 @@ Phase 2 shipped the first set of contributor utilities:
 - `jq` 1.6+
 - `curl`
 - Node.js 18+ (run `npm install` once to install repo dependencies used by the importer + validation tooling).
+- The vendored n8n-mcp client in `ci/vendor/n8n-mcp` is compiled via `npm run build:client` (runs automatically after `npm install`).
 
 ### Typical Flow
 

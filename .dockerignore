@@ -1,6 +1,5 @@
 .git
 node_modules
 npm-debug.log
-dist
 Dockerfile
 **/.DS_Store

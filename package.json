@@ -7,7 +7,8 @@
     "validate": "node ci/validate.js",
     "import": "node --experimental-specifier-resolution=node ci/import_all.mjs",
     "build:schema": "npx typescript-json-schema tsconfig.schemas.json WorkflowImport --out ci/workflow-schema.json && node ci/scripts/normalize-schema.mjs ci/workflow-schema.json",
-    "postinstall": "node ci/scripts/postinstall-patch.mjs"
+    "build:client": "tsc -p tsconfig.n8n-mcp.json && cp ci/vendor/n8n-mcp/package.commonjs.json ci/vendor/n8n-mcp/dist/package.json",
+    "postinstall": "node ci/scripts/postinstall-patch.mjs && npm run build:client"
   },
   "devDependencies": {
     "typescript": "^5.6.3",
@@ -17,6 +18,7 @@
     "@n8n/rest-api-client": "^1.25.2",
     "ajv": "^8.17.1",
     "axios": "^1.13.2",
-    "glob": "^8.1.0"
+    "glob": "^8.1.0",
+    "zod": "^3.24.1"
   }
 }

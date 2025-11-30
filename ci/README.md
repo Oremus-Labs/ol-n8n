@@ -24,7 +24,7 @@ ci/export_all.sh [output-dir]
 The script slugifies workflow names into folder names and writes `workflow.json` plus metadata for each workflow.
 
 ### `ci/import_all.mjs`
-Imports or updates every `workflow.json` under `workflows/` using the official `@n8n/rest-api-client`. Each workflow is validated against `ci/workflow-schema.json` (generated from the SDK types) before it is sent to the API.
+Imports or updates every `workflow.json` under `workflows/` using the `N8nApiClient` from the [n8n-mcp](https://github.com/czlonkowski/n8n-mcp) project. Each workflow is validated against `ci/workflow-schema.json` before it is sent to the API, and the vendored client performs an additional cleanup pass (`cleanWorkflowForCreate/Update`) so that we only submit properties the API accepts.
 
 ```
 npm install               # first time only
@@ -34,6 +34,8 @@ npm run import [optional-path-to-workflows]
 ```
 
 Existing workflows that contain an `id` field are updated via `PUT`; others are created via `POST`. Set `N8N_PUSH_REF` to override the commit reference tagged in workflow versions (defaults to `git-sync`).
+
+The n8n-mcp client code lives in `ci/vendor/n8n-mcp/src`. It is compiled to CommonJS (`ci/vendor/n8n-mcp/dist`) via `npm run build:client`, which runs automatically during `npm install` and as part of the Docker build. If you update any of the vendored files, rerun `npm run build:client` so the dist artifacts stay in sync.
 
 ### Containerized importer
 

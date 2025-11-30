@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "rootDir": "ci/vendor/n8n-mcp/src",
+    "outDir": "ci/vendor/n8n-mcp/dist",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": false
+  },
+  "include": ["ci/vendor/n8n-mcp/src/**/*.ts"]
+}

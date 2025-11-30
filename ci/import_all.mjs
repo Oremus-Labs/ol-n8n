@@ -1,5 +1,4 @@
 import { readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -9,26 +8,10 @@ import glob from 'glob';
 import Ajv from 'ajv';
 
 const require = createRequire(import.meta.url);
+const { N8nApiClient } = require('./vendor/n8n-mcp/dist/services/n8n-api-client.js');
+const { N8nApiError, N8nNotFoundError } = require('./vendor/n8n-mcp/dist/utils/n8n-errors.js');
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function resolveModuleRoot() {
-  const explicit = process.env.N8N_IMPORTER_MODULES;
-  const candidates = [
-    explicit,
-    path.resolve(__dirname, '../node_modules'),
-    path.resolve(__dirname, 'node_modules'),
-  ].filter(Boolean);
-  for (const candidate of candidates) {
-    if (existsSync(candidate)) {
-      return candidate;
-    }
-  }
-  return candidates[candidates.length - 1];
-}
-
-const moduleRoot = resolveModuleRoot();
-const restClientPath = path.join(moduleRoot, '@n8n/rest-api-client/dist/index.cjs');
-const { request } = require(restClientPath);
 
 const { N8N_API_URL, N8N_API_KEY, N8N_PUSH_REF } = process.env;
 
@@ -42,11 +25,10 @@ if (!N8N_API_KEY) {
   process.exit(1);
 }
 
-const baseUrl = `${N8N_API_URL.replace(/\/$/, '')}/api/v1`;
-const context = {
-  baseUrl,
-  pushRef: N8N_PUSH_REF && N8N_PUSH_REF.length > 0 ? N8N_PUSH_REF : 'git-sync',
-};
+const apiBaseUrl = `${N8N_API_URL.replace(/\/$/, '')}`;
+const pushRef = N8N_PUSH_REF && N8N_PUSH_REF.length > 0 ? N8N_PUSH_REF : 'git-sync';
+process.env.LOG_LEVEL = process.env.LOG_LEVEL ?? 'error';
+const apiClient = new N8nApiClient({ baseUrl: apiBaseUrl, apiKey: N8N_API_KEY, pushRef });
 
 const validatorPromise = (async () => {
   const schemaPath = new URL('./workflow-schema.json', import.meta.url);
@@ -61,40 +43,6 @@ function resolveWorkflowsDir() {
   const fallback = path.resolve(process.cwd(), 'workflows');
   const target = argDir ?? envDir ?? fallback;
   return path.isAbsolute(target) ? target : path.resolve(process.cwd(), target);
-}
-
-function sanitizeWorkflowObject(workflow, { isUpdate }) {
-  const clone = JSON.parse(JSON.stringify(workflow));
-  const readOnlyFields = [
-    'versionId',
-    'activeVersionId',
-    'updatedAt',
-    'createdAt',
-    'staticData',
-    'triggerCount',
-    'versionCounter',
-    'isArchived',
-    'ownerId',
-    'meta',
-  ];
-  for (const field of readOnlyFields) {
-    if (field in clone) {
-      delete clone[field];
-    }
-  }
-  if (!isUpdate && clone.id) {
-    delete clone.id;
-  }
-  if ('active' in clone) {
-    delete clone.active;
-  }
-  if ('pinData' in clone) {
-    delete clone.pinData;
-  }
-  if (!clone.settings || typeof clone.settings !== 'object') {
-    clone.settings = {};
-  }
-  return clone;
 }
 
 async function main() {
@@ -117,8 +65,11 @@ async function main() {
     failures += 1;
     const relativePath = path.relative(workflowsRoot, file) || file;
     console.error(`[import_all] Failed to import ${relativePath}`);
-    if (error?.response?.data) {
-      console.error(JSON.stringify(error.response.data));
+    if (error instanceof N8nApiError) {
+      console.error(`Status: ${error.statusCode ?? 'unknown'} Code: ${error.code ?? 'n/a'} Message: ${error.message}`);
+      if (error.details) {
+        console.error(JSON.stringify(error.details));
+      }
     } else if (error?.stack) {
       console.error(error.stack);
     } else {
@@ -137,22 +88,23 @@ async function main() {
       }
       const workflowName = workflow.name ?? path.basename(path.dirname(file));
       const hasId = typeof workflow.id === 'string' && workflow.id.trim() !== '';
-      const sanitized = sanitizeWorkflowObject(workflow, { isUpdate: hasId });
-      const endpoint = hasId ? `/workflows/${workflow.id}` : '/workflows';
-      const method = hasId ? 'PUT' : 'POST';
-
-      await request({
-        method,
-        baseURL: context.baseUrl,
-        endpoint,
-        headers: {
-          'push-ref': context.pushRef,
-          'X-N8N-API-KEY': N8N_API_KEY,
-          'Content-Type': 'application/json',
-        },
-        data: sanitized,
-      });
-      console.log(`[import_all] ${method} ${endpoint} (${workflowName})`);
+      if (hasId) {
+        try {
+          await apiClient.updateWorkflow(workflow.id, workflow);
+          console.log(`[import_all] PUT /workflows/${workflow.id} (${workflowName})`);
+        } catch (error) {
+          if (error instanceof N8nNotFoundError) {
+            console.warn(`[import_all] Workflow id ${workflow.id} not found, creating new (${workflowName})`);
+            await apiClient.createWorkflow(workflow);
+            console.log(`[import_all] POST /workflows (${workflowName})`);
+          } else {
+            throw error;
+          }
+        }
+      } else {
+        await apiClient.createWorkflow(workflow);
+        console.log(`[import_all] POST /workflows (${workflowName})`);
+      }
     } catch (error) {
       logFailure(file, error);
     }

@@ -1,2 +1,3 @@
 node_modules/
 .DS_Store
+ci/vendor/n8n-mcp/dist
