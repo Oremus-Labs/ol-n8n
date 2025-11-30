@@ -92,6 +92,8 @@ The Helm chart at `ol-kubernetes-cluster/apps/workloads/n8n/chart` now exposes `
 Create the following secret in the `n8n` namespace before enabling the values:
 
 1. **`n8n-sync-secrets`** – API token for the in-cluster n8n instance.
+2. **`n8n-postgresql`** – Managed by the 1Password Operator. Must contain `password` and `postgres-password` fields so Bitnami PostgreSQL reuses the same credentials after every sync or pod restart.
+3. **`n8n-redis`** – Also sourced from 1Password. Needs the `redis-password` field so the queue + worker deployments authenticate reliably after rollouts.
 
 ```
 kubectl -n n8n create secret generic n8n-sync-secrets \
