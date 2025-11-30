@@ -28,12 +28,25 @@ Imports or updates every `workflow.json` under `workflows/` using the official `
 
 ```
 npm install               # first time only
-N8N_API_URL="https://n8n.staging.example.com" \
-N8N_API_KEY="<personal-api-key>" \
-npm run import
+N8N_API_URL="https://n8n.staging.example.com" \\
+N8N_API_KEY="<personal-api-key>" \\
+npm run import [optional-path-to-workflows]
 ```
 
 Existing workflows that contain an `id` field are updated via `PUT`; others are created via `POST`. Set `N8N_PUSH_REF` to override the commit reference tagged in workflow versions (defaults to `git-sync`).
+
+### Containerized importer
+
+The Dockerfile at the repo root builds `ghcr.io/oremus-labs/n8n-git-sync:latest`, a tiny Node 20 image that bundles `ci/import_all.mjs`, the JSON schema, and all runtime dependencies. The Kubernetes CronJob uses this image so pods no longer need to run `npm ci` on every sync.
+
+Rebuild and push after modifying the importer or dependencies:
+
+```
+docker build -t ghcr.io/oremus-labs/n8n-git-sync:latest .
+docker push ghcr.io/oremus-labs/n8n-git-sync:latest
+```
+
+Set `WORKFLOWS_DIR` (or pass a positional argument) when running the container so it knows where the git-synced `workflows/` tree lives.
 
 ### `npm run build:schema`
 Regenerates `ci/workflow-schema.json` from the official REST client TypeScript definitions. Run this whenever the SDK is upgraded.

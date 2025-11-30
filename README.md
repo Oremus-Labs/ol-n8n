@@ -90,7 +90,7 @@ Once a change passes validation, the Kubernetes cluster picks it up via the in-c
 The Helm chart at `ol-kubernetes-cluster/apps/workloads/n8n/chart` now exposes `gitSync.*` values. When `gitSync.enabled=true`, it deploys a CronJob inside the cluster every 10 minutes:
 
 1. Clones this repo (public) via HTTPS by default (no credentials required). Set `gitSync.gitSecret.name` only if you want to use an SSH deploy key.
-2. Runs `npm ci --omit=dev` followed by `npm run import`, pointing at the internal n8n service (`N8N_API_URL`).
+2. Launches the importer image `ghcr.io/oremus-labs/n8n-git-sync:latest`, which already contains Node plus the validated importer bundle. The container reads workflows from the git-synced volume and pushes them to the internal n8n service (`N8N_API_URL`).
 3. Because everything runs inside the VPC/cluster network, n8n never needs to be exposed externally.
 
 ### Required Kubernetes Secrets
@@ -105,4 +105,4 @@ With the 1Password Operator installed, defining the vault items (and referencing
 
 If you prefer SSH cloning, create the optional `n8n-sync-git` secret (deploy key + known_hosts) and set `gitSync.gitSecret.name` accordingly. Otherwise leave it empty and the CronJob will clone via HTTPS anonymously.
 
-Set the appropriate `gitSync.*` values (repo, branch, apiUrl) in the Helm release (ApplicationSet). Once Argo CD syncs, the CronJob named `<release>-sync` will appear. Monitor with `kubectl get cronjob -n n8n` or hook it into your alerting pipeline.
+Set the appropriate `gitSync.*` values (repo, branch, apiUrl) in the Helm release (ApplicationSet). Once Argo CD syncs, the CronJob named `<release>-sync` will appear. Monitor with `kubectl get cronjob -n n8n` or hook it into your alerting pipeline. When you change the importer code, rebuild/push the container and bump `gitSync.runnerImage` to roll it out.

@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -10,7 +11,24 @@ import Ajv from 'ajv';
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const restClientPath = path.resolve(__dirname, '../node_modules/@n8n/rest-api-client/dist/index.cjs');
+
+function resolveModuleRoot() {
+  const explicit = process.env.N8N_IMPORTER_MODULES;
+  const candidates = [
+    explicit,
+    path.resolve(__dirname, '../node_modules'),
+    path.resolve(__dirname, 'node_modules'),
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return candidates[candidates.length - 1];
+}
+
+const moduleRoot = resolveModuleRoot();
+const restClientPath = path.join(moduleRoot, '@n8n/rest-api-client/dist/index.cjs');
 const { makeRestApiRequest } = require(restClientPath);
 
 const { N8N_API_URL, N8N_API_KEY, N8N_PUSH_REF } = process.env;
@@ -40,12 +58,25 @@ const validatorPromise = (async () => {
   return ajv.compile(schema);
 })();
 
+function resolveWorkflowsDir() {
+  const argDir = process.argv[2];
+  const envDir = process.env.WORKFLOWS_DIR;
+  const fallback = path.resolve(process.cwd(), 'workflows');
+  const target = argDir ?? envDir ?? fallback;
+  return path.isAbsolute(target) ? target : path.resolve(process.cwd(), target);
+}
+
 async function main() {
-  const workflowFiles = glob.sync('workflows/**/workflow.json', { nodir: true });
+  const workflowsRoot = resolveWorkflowsDir();
+  const globbed = glob.sync('**/workflow.json', {
+    cwd: workflowsRoot,
+    nodir: true,
+  });
+  const workflowFiles = globbed.map((file) => path.join(workflowsRoot, file));
   const validateWorkflow = await validatorPromise;
 
   if (workflowFiles.length === 0) {
-    console.log('[import_all] No workflow.json files found');
+    console.log(`[import_all] No workflow.json files found under ${workflowsRoot}`);
     return;
   }
 
@@ -53,7 +84,8 @@ async function main() {
 
   const logFailure = (file, error) => {
     failures += 1;
-    console.error(`[import_all] Failed to import ${file}`);
+    const relativePath = path.relative(workflowsRoot, file) || file;
+    console.error(`[import_all] Failed to import ${relativePath}`);
     if (error?.response?.data) {
       console.error(JSON.stringify(error.response.data));
     } else if (error?.stack) {
