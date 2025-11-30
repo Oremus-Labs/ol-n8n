@@ -27,13 +27,12 @@
     },
     {
       "parameters": {
-        "mode": "passThrough",
-        "passThrough": "input1"
+        "mode": "append"
       },
       "id": "triggerMerge",
       "name": "Trigger Merge",
       "type": "n8n-nodes-base.merge",
-      "typeVersion": 2.1,
+      "typeVersion": 3.2,
       "position": [520, 410]
     },
     {
@@ -55,17 +54,20 @@
               "value": "1"
             }
           ]
+        },
+        "options": {
+          "onError": "continueRegularOutput"
         }
       },
       "id": "listRepoTree",
       "name": "List Repo Tree",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "typeVersion": 4.3,
       "position": [740, 410]
     },
     {
       "parameters": {
-        "functionCode": "const tree = $json.tree || [];\nconst workflows = tree\n  .filter(entry => entry.type === 'blob' && /^workflows\\\/[^\\/]+\\/workflow\\.json$/.test(entry.path))\n  .map(entry => ({\n    path: entry.path,\n    rawUrl: `https://raw.githubusercontent.com/Oremus-Labs/ol-n8n/main/${entry.path}`\n  }));\nreturn workflows.map(item => ({ json: item }));"
+        "functionCode": "const tree = $json.tree || [];\nconst workflows = tree\n  .filter(entry => entry.type === 'blob' && /^workflows\\/[^\\/]+\\/workflow\\.json$/.test(entry.path))\n  .map(entry => ({\n    path: entry.path,\n    rawUrl: `https://raw.githubusercontent.com/Oremus-Labs/ol-n8n/main/${entry.path}`\n  }));\nreturn workflows.map(item => ({ json: item }));"
       },
       "id": "selectWorkflows",
       "name": "Select Workflow Files",
@@ -85,12 +87,15 @@
               "value": "application/json"
             }
           ]
+        },
+        "options": {
+          "onError": "continueRegularOutput"
         }
       },
       "id": "fetchWorkflow",
       "name": "Fetch Workflow JSON",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "typeVersion": 4.3,
       "position": [1220, 410]
     },
     {
@@ -121,12 +126,15 @@
           ]
         },
         "bodyParametersJson": "={{JSON.stringify($json.body)}}",
-        "requestMethod": "={{$json.method}}"
+        "requestMethod": "={{$json.method}}",
+        "options": {
+          "onError": "continueRegularOutput"
+        }
       },
       "id": "upsertWorkflow",
       "name": "Upsert Workflow",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "typeVersion": 4.3,
       "position": [1680, 410]
     }
   ],

@@ -1,0 +1,278 @@
+{
+  "name": "N8N to Repo Sync",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "manualTrigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [300, 320]
+    },
+    {
+      "parameters": {
+        "triggerTimes": [
+          {
+            "mode": "everyX",
+            "unit": "hours",
+            "value": 6
+          }
+        ]
+      },
+      "id": "cronTrigger",
+      "name": "Scheduled Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [300, 500]
+    },
+    {
+      "parameters": {
+        "mode": "append"
+      },
+      "id": "triggerMerge",
+      "name": "Trigger Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [520, 410]
+    },
+    {
+      "parameters": {
+        "url": "={{($env.N8N_API_URL || 'https://n8n.oremuslabs.app').replace(/\\/$/, '') + '/rest/workflows'}}",
+        "responseFormat": "json",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-N8N-API-KEY",
+              "value": "={{$env.N8N_API_KEY}}"
+            }
+          ]
+        },
+        "options": {
+          "onError": "continueRegularOutput"
+        }
+      },
+      "id": "listWorkflows",
+      "name": "List All Workflows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [740, 410]
+    },
+    {
+      "parameters": {
+        "functionCode": "const workflows = $json.data || [];\nreturn workflows.map(w => ({ json: w }));"
+      },
+      "id": "extractWorkflows",
+      "name": "Extract Workflows Array",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1.3,
+      "position": [980, 410]
+    },
+    {
+      "parameters": {
+        "url": "={{($env.N8N_API_URL || 'https://n8n.oremuslabs.app').replace(/\\/$/, '') + '/rest/workflows/' + $json.id}}",
+        "responseFormat": "json",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "X-N8N-API-KEY",
+              "value": "={{$env.N8N_API_KEY}}"
+            }
+          ]
+        },
+        "options": {
+          "onError": "continueRegularOutput"
+        }
+      },
+      "id": "getWorkflowDetails",
+      "name": "Get Workflow Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1220, 410]
+    },
+    {
+      "parameters": {
+        "functionCode": "const workflow = $json;\nconst sanitizeName = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');\nconst dirName = sanitizeName(workflow.name || 'unnamed');\nconst cleanWorkflow = {\n  name: workflow.name,\n  nodes: workflow.nodes,\n  connections: workflow.connections,\n  active: false,\n  settings: workflow.settings || {}\n};\nreturn {\n  json: {\n    workflowId: workflow.id,\n    workflowName: workflow.name,\n    dirName,\n    path: `workflows/${dirName}/workflow.json`,\n    content: JSON.stringify(cleanWorkflow, null, 2)\n  }\n};"
+      },
+      "id": "prepareWorkflowForGit",
+      "name": "Prepare Workflow for Git",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1.3,
+      "position": [1440, 410]
+    },
+    {
+      "parameters": {
+        "url": "={{'https://api.github.com/repos/Oremus-Labs/ol-n8n/contents/' + $json.path}}",
+        "responseFormat": "json",
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.GITHUB_TOKEN}}"
+            }
+          ]
+        },
+        "options": {
+          "onError": "continueRegularOutput",
+          "allowUnauthorizedCerts": false
+        }
+      },
+      "id": "getExistingFile",
+      "name": "Get Existing File SHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1680, 410]
+    },
+    {
+      "parameters": {
+        "functionCode": "const prevItem = $('Prepare Workflow for Git').item.json;\nconst existingFile = $json;\nconst message = existingFile.sha \n  ? `Update ${prevItem.workflowName} workflow from n8n`\n  : `Add ${prevItem.workflowName} workflow from n8n`;\nconst body = {\n  message,\n  content: Buffer.from(prevItem.content).toString('base64'),\n  branch: 'main'\n};\nif (existingFile.sha) {\n  body.sha = existingFile.sha;\n}\nreturn {\n  json: {\n    ...prevItem,\n    existingSha: existingFile.sha || null,\n    githubBody: body\n  }\n};"
+      },
+      "id": "prepareGitHubUpdate",
+      "name": "Prepare GitHub Update",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1.3,
+      "position": [1920, 410]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{'https://api.github.com/repos/Oremus-Labs/ol-n8n/contents/' + $json.path}}",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "headerParametersUi": {
+          "parameter": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{'Bearer ' + $env.GITHUB_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "bodyParametersJson": "={{JSON.stringify($json.githubBody)}}",
+        "options": {
+          "onError": "continueRegularOutput"
+        }
+      },
+      "id": "updateGitHubFile",
+      "name": "Update GitHub File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2160, 410]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trigger Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scheduled Trigger": {
+      "main": [
+        [
+          {
+            "node": "Trigger Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Trigger Merge": {
+      "main": [
+        [
+          {
+            "node": "List All Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List All Workflows": {
+      "main": [
+        [
+          {
+            "node": "Extract Workflows Array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Workflows Array": {
+      "main": [
+        [
+          {
+            "node": "Get Workflow Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Workflow Details": {
+      "main": [
+        [
+          {
+            "node": "Prepare Workflow for Git",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Workflow for Git": {
+      "main": [
+        [
+          {
+            "node": "Get Existing File SHA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing File SHA": {
+      "main": [
+        [
+          {
+            "node": "Prepare GitHub Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare GitHub Update": {
+      "main": [
+        [
+          {
+            "node": "Update GitHub File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
