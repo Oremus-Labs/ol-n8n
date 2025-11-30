@@ -28,10 +28,10 @@ for file in "${files[@]}"; do
   id=$(jq -r '.id // empty' "$file")
   if [[ -n "$id" ]]; then
     method="PUT"
-    endpoint="$N8N_API_URL/rest/workflows/$id"
+    endpoint="$N8N_API_URL/api/v1/workflows/$id"
   else
     method="POST"
-    endpoint="$N8N_API_URL/rest/workflows"
+    endpoint="$N8N_API_URL/api/v1/workflows"
   fi
   echo "[import_all] $method $endpoint ($name)"
   if ! curl -fsS -X "$method" "$endpoint" \
