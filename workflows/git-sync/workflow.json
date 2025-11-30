@@ -111,7 +111,7 @@
           "parameter": [
             {
               "name": "X-N8N-API-KEY",
-              "value": "={{$env.N8N_API_KEY}}"
+              "value": "{{$env.N8N_API_KEY}}"
             },
             {
               "name": "Content-Type",
@@ -121,7 +121,7 @@
         },
         "sendBody": true,
         "bodyParametersJson": "={{JSON.stringify($json.body)}}",
-        "requestMethod": "={{$json.method}}",
+        "requestMethod": "{{$json.method}}",
         "options": {
           "onError": "continueRegularOutput"
         }
