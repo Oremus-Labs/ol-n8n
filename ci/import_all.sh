@@ -35,7 +35,7 @@ for file in "${files[@]}"; do
   fi
   echo "[import_all] $method $endpoint ($name)"
   if ! curl -fsS -X "$method" "$endpoint" \
-      -H "Authorization: Bearer $N8N_API_KEY" \
+      -H "X-N8N-API-KEY: $N8N_API_KEY" \
       -H "Content-Type: application/json" \
       --data-binary @"$file" > /dev/null; then
     echo "[import_all] Failed to import $file" >&2
