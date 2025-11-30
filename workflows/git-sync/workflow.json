@@ -92,7 +92,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const workflow = $json.workflow ?? $json;\nconst path = $json.path || 'workflows/unknown/workflow.json';\nconst apiBase = ($env.N8N_API_URL || 'https://n8n.oremuslabs.app').replace(/\\/$/, '');\nconst hasId = typeof workflow.id === 'string' && workflow.id.trim() !== '';\nconst url = hasId ? `${apiBase}/rest/workflows/${workflow.id}` : `${apiBase}/rest/workflows`;\nreturn {\n  json: {\n    method: hasId ? 'PUT' : 'POST',\n    url,\n    body: workflow,\n    sourcePath: path,\n    workflowName: workflow.name || path.split('/')[1] || 'workflow'\n  }\n};"
+        "functionCode": "const workflow = $json.workflow ?? $json;\nconst path = $json.path || 'workflows/unknown/workflow.json';\nconst apiBase = ($env.N8N_API_URL || 'https://n8n.oremuslabs.app').replace(/\\/$/, '');\nconst hasId = typeof workflow.id === 'string' && workflow.id.trim() !== '';\nconst url = hasId ? `${apiBase}/api/v1/workflows/${workflow.id}` : `${apiBase}/api/v1/workflows`;\nreturn {\n  json: {\n    method: hasId ? 'PUT' : 'POST',\n    url,\n    body: workflow,\n    sourcePath: path,\n    workflowName: workflow.name || path.split('/')[1] || 'workflow'\n  }\n};"
       },
       "id": "prepareUpsert",
       "name": "Prepare Upsert Request",
