@@ -114,6 +114,10 @@
               "value": "{{$env.N8N_API_KEY}}"
             },
             {
+              "name": "test",
+              "value": "test"
+            },
+            {
               "name": "Content-Type",
               "value": "application/json"
             }
