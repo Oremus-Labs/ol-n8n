@@ -4,24 +4,9 @@ Helper scripts for working with the n8n GitOps repo.
 
 ## Prerequisites
 
-- `jq` installed locally (for `export_all.sh`).
-- `curl` (already available on most systems).
 - Node.js 18+ (run `npm install` once to install dependencies for the Node-based tooling).
 
 ## Scripts
-
-### `ci/export_all.sh`
-Exports every workflow from a running n8n instance into the `workflows/` tree using the REST API.
-
-Usage:
-
-```
-N8N_API_URL="https://n8n.dev.example.com" \
-N8N_API_KEY="<personal-api-key>" \
-ci/export_all.sh [output-dir]
-```
-
-The script slugifies workflow names into folder names and writes `workflow.json` plus metadata for each workflow.
 
 ### `ci/import_all.mjs`
 Imports or updates every `workflow.json` under `workflows/` using the `N8nApiClient` from the [n8n-mcp](https://github.com/czlonkowski/n8n-mcp) project. Each workflow is validated against `ci/workflow-schema.json` before it is sent to the API, and the vendored client performs an additional cleanup pass (`cleanWorkflowForCreate/Update`) so that we only submit properties the API accepts.
