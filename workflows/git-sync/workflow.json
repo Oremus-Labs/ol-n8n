@@ -37,21 +37,13 @@
     },
     {
       "parameters": {
-        "url": "https://api.github.com/repos/Oremus-Labs/ol-n8n/git/trees/main",
+        "url": "https://api.github.com/repos/Oremus-Labs/ol-n8n/git/trees/main?recursive=1",
         "responseFormat": "json",
         "headerParametersUi": {
           "parameter": [
             {
               "name": "Accept",
               "value": "application/vnd.github+json"
-            }
-          ]
-        },
-        "queryParametersUi": {
-          "parameter": [
-            {
-              "name": "recursive",
-              "value": "1"
             }
           ]
         },
