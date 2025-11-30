@@ -105,6 +105,7 @@
       "parameters": {
         "url": "={{$json.url}}",
         "responseFormat": "json",
+        "sendHeaders": true,
         "jsonParameters": true,
         "headerParametersUi": {
           "parameter": [
@@ -118,6 +119,7 @@
             }
           ]
         },
+        "sendBody": true,
         "bodyParametersJson": "={{JSON.stringify($json.body)}}",
         "requestMethod": "={{$json.method}}",
         "options": {
