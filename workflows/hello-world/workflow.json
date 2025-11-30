@@ -1,0 +1,33 @@
+{
+  "name": "hello-world",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "Hello from GitOps"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1",
+      "name": "Set Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        520,
+        300
+      ]
+    }
+  ],
+  "connections": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "versionId": "00000000-0000-0000-0000-000000000001"
+}
