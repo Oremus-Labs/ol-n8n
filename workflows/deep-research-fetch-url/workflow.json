@@ -39,6 +39,10 @@
         "responseFormat": "string",
         "options": {
           "fullResponse": true,
+          "ignoreResponseCode": true,
+          "followRedirect": true,
+          "maxRedirects": 5,
+          "timeout": 15000,
           "headers": [
             {
               "name": "User-Agent",
@@ -54,11 +58,12 @@
       "position": [
         700,
         520
-      ]
+      ],
+      "continueOnFail": true
     },
     {
       "parameters": {
-        "functionCode": "const url = $items('Validate URL', 0)[0].json.url;\nconst body = $json.body || '';\nconst titleMatch = body.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\nconst title = titleMatch ? titleMatch[1].replace(/\\s+/g, ' ').trim() : url;\nconst text = body\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;/gi, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim();\nreturn [{ json: { url, title, content: text } }];"
+        "functionCode": "const url = $items('Validate URL', 0)[0].json.url;\nconst statusCode = $json.statusCode ?? 200;\nconst body = $json.body ?? '';\nconst headers = $json.headers || {};\nconst contentType = (headers['content-type'] || headers['Content-Type'] || '').toLowerCase();\n\nif (statusCode >= 400) {\n  return [{ json: { error: `Fetch failed with status ${statusCode}`, statusCode, url } }];\n}\n\nif (!body || contentType.includes('pdf') || contentType.includes('octet-stream')) {\n  return [{ json: { error: 'Unsupported or empty response body', statusCode, url } }];\n}\n\nconst titleMatch = body.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\nconst title = titleMatch ? titleMatch[1].replace(/\\s+/g, ' ').trim() : url;\nconst text = body\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;/gi, ' ')\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nreturn [{ json: { url, title, content: text, statusCode } }];"
       },
       "id": "cleanContent",
       "name": "Clean Content",
