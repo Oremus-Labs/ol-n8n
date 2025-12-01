@@ -1,5 +1,5 @@
 {
-  "id": "WvZ1p1C3nL2aXq9F",
+  "id": "T3DDusLZiAw2rz24",
   "name": "Deep Research Web Search",
   "nodes": [
     {
@@ -39,22 +39,6 @@
         "responseFormat": "json",
         "dataPropertyName": "searx",
         "jsonParameters": true,
-        "options": {
-          "query": [
-            {
-              "name": "format",
-              "value": "json"
-            },
-            {
-              "name": "language",
-              "value": "en"
-            },
-            {
-              "name": "safesearch",
-              "value": "1"
-            }
-          ]
-        },
         "queryParametersJson": "={\n  \"q\": $json.query,\n  \"format\": \"json\",\n  \"language\": \"en\",\n  \"safesearch\": 1\n}"
       },
       "id": "callSearx",
@@ -68,7 +52,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const limit = $items('Normalize Input', 0)[0].json.limit;\nconst results = ($json.searx?.results || []).slice(0, limit).map((item, index) => ({\n  title: item.title || item.url || `Result ${index + 1}`,\n  url: item.url || '',\n  snippet: (item.content || item.abstract || '').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim()\n})).filter(entry => entry.url);\nreturn [{ json: { query: $items('Normalize Input', 0)[0].json.query, num_results: results.length, results } }];"
+        "functionCode": "const base = $items('Normalize Input', 0)[0].json;\nconst limit = base.limit;\nconst results = ($json.searx?.results || [])\n  .slice(0, limit)\n  .map((item, index) => ({\n    title: item.title || item.url || `Result ${index + 1}`,\n    url: item.url || '',\n    snippet: (item.content || item.abstract || '')\n      .replace(/<[^>]+>/g, ' ')\n      .replace(/\\s+/g, ' ')\n      .trim()\n  }))\n  .filter(entry => entry.url);\nreturn [{ json: { query: base.query, num_results: results.length, results } }];"
       },
       "id": "formatResults",
       "name": "Format Results",
@@ -78,7 +62,6 @@
         980,
         300
       ]
-    },
     }
   ],
   "connections": {
