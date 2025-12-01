@@ -6,7 +6,7 @@
       "parameters": {
         "path": "dr-fetch-url",
         "httpMethod": "POST",
-        "respond": false,
+        "responseMode": "lastNode",
         "options": {
           "responseContentType": "application/json"
         }
@@ -72,20 +72,6 @@
         960,
         520
       ]
-    },
-    {
-      "parameters": {
-        "responseBody": "={{$json}}",
-        "responseCode": 200
-      },
-      "id": "respondFetch",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        1200,
-        520
-      ]
     }
   ],
   "connections": {
@@ -116,17 +102,6 @@
         [
           {
             "node": "Clean Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Clean Content": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
             "type": "main",
             "index": 0
           }
