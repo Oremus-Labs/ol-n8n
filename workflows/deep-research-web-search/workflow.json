@@ -1,0 +1,150 @@
+{
+  "id": "WvZ1p1C3nL2aXq9F",
+  "name": "Deep Research Web Search",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "dr-web-search",
+        "responseMode": "lastNode",
+        "options": {
+          "responseContentType": "application/json"
+        }
+      },
+      "id": "webhookTrigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const body = $json.body || {};\nconst query = (body.query || body.q || '').trim();\nif (!query) {\n  throw new Error('Missing `query` in payload');\n}\nconst limitRaw = body.num_results ?? body.limit ?? 5;\nconst limit = Math.max(1, Math.min(10, Number(limitRaw) || 5));\nreturn [{ json: { query, limit } }];"
+      },
+      "id": "normalizeInput",
+      "name": "Normalize Input",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ ($env.SEARCH_API_BASE_URL || '').replace(/\\/$/, '') + '/search' }}",
+        "responseFormat": "json",
+        "dataPropertyName": "searx",
+        "jsonParameters": true,
+        "options": {
+          "query": [
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "language",
+              "value": "en"
+            },
+            {
+              "name": "safesearch",
+              "value": "1"
+            }
+          ]
+        },
+        "queryParametersJson": "={\n  \"q\": $json.query,\n  \"format\": \"json\",\n  \"language\": \"en\",\n  \"safesearch\": 1\n}"
+      },
+      "id": "callSearx",
+      "name": "Search SearXNG",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        720,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const limit = $items('Normalize Input', 0)[0].json.limit;\nconst results = ($json.searx?.results || []).slice(0, limit).map((item, index) => ({\n  title: item.title || item.url || `Result ${index + 1}`,\n  url: item.url || '',\n  snippet: (item.content || item.abstract || '').replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ').trim()\n})).filter(entry => entry.url);\nreturn [{ json: { query: $items('Normalize Input', 0)[0].json.query, num_results: results.length, results } }];"
+      },
+      "id": "formatResults",
+      "name": "Format Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "lastNode",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respondWebhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Input": {
+      "main": [
+        [
+          {
+            "node": "Search SearXNG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search SearXNG": {
+      "main": [
+        [
+          {
+            "node": "Format Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Results": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  }
+}
