@@ -5,7 +5,8 @@
     {
       "parameters": {
         "path": "dr-web-search",
-        "responseMode": "lastNode",
+        "httpMethod": "POST",
+        "respond": false,
         "options": {
           "responseContentType": "application/json"
         }
@@ -80,10 +81,8 @@
     },
     {
       "parameters": {
-        "respondWith": "lastNode",
-        "options": {
-          "responseCode": 200
-        }
+        "responseBody": "={{$json}}",
+        "responseCode": 200
       },
       "id": "respondWebhook",
       "name": "Respond to Webhook",

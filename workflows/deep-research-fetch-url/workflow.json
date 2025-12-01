@@ -5,7 +5,8 @@
     {
       "parameters": {
         "path": "dr-fetch-url",
-        "responseMode": "lastNode",
+        "httpMethod": "POST",
+        "respond": false,
         "options": {
           "responseContentType": "application/json"
         }
@@ -74,10 +75,8 @@
     },
     {
       "parameters": {
-        "respondWith": "lastNode",
-        "options": {
-          "responseCode": 200
-        }
+        "responseBody": "={{$json}}",
+        "responseCode": 200
       },
       "id": "respondFetch",
       "name": "Respond to Webhook",
